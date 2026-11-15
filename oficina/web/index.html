@@ -35,6 +35,8 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 15px; 
 .derecha { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .cargando { position: absolute; inset: 0; display: grid; place-items: center; color: var(--plata); font-size: 13px; pointer-events: none; }
 .escena canvas + .cargando { display: none; }
+.ayuda { position: absolute; left: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); margin: 0; max-width: calc(100% - 24px);
+  background: rgba(0,0,0,.72); color: var(--plata); font-size: 11px; padding: 6px 10px; border-radius: 6px; pointer-events: none; }
 .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--gris); }
 .punto.on { background: var(--blanco); box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
 main { min-height: 0; display: grid; grid-template-columns: 1fr 300px; grid-template-areas: "escena panel"; position: relative; }
@@ -87,6 +89,7 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
   <main>
     <div class="escena" id="escena3d">
       <div class="cargando" id="cargando3d">Armando la oficina en 3D…</div>
+      <p class="ayuda" id="ayuda3d">Un dedo: mover · Dos dedos: zoom y girar · Doble toque: acercar ahí</p>
     </div>
     <div class="escena" id="escena" hidden>
       <canvas id="lienzo" aria-label="Concesionario JH AUTOS en pixel art con los empleados trabajando"></canvas>
@@ -460,6 +463,10 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
       if (plano) requestAnimationFrame(() => verOficina());
     }
   }
+  try {
+    if (window.matchMedia("(pointer: fine)").matches)
+      document.getElementById("ayuda3d").textContent = "Arrastra: mover · Clic derecho: girar · Rueda: zoom donde apuntas · Doble clic: acercar ahí";
+  } catch (e) { /* sin matchMedia */ }
   document.getElementById("b3d").onclick = () => cambiarVista("3d");
   document.getElementById("bpx").onclick = () => cambiarVista("pixel");
   window.JH = {

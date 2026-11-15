@@ -347,12 +347,60 @@
         if (d.length() < 0.002) seguir = null;
       }
     }
+    if (vuelo) {
+      vuelo.t = Math.min(1, vuelo.t + dt * 2.2);
+      const k = 1 - Math.pow(1 - vuelo.t, 3);
+      controls.target.lerpVectors(vuelo.desdeT, vuelo.haciaT, k);
+      camera.position.lerpVectors(vuelo.desdeC, vuelo.haciaC, k);
+      if (vuelo.t >= 1) vuelo = null;
+    }
     controls.update();
+    if (pellizco && pellizco.ancla) {
+      const p = suelo(pellizco.mx, pellizco.my);
+      if (p) { const d = pellizco.ancla.clone().sub(p); d.y = 0; camera.position.add(d); controls.target.add(d); }
+    }
+    limitarMapa();
     renderer.render(scene, camera);
     requestAnimationFrame(cuadro);
   }
 
-  let seguir = null;
+  let seguir = null, vuelo = null, pellizco = null;
+  const plano0 = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+  // Punto del piso que está bajo una posición de la pantalla
+  function suelo(cx, cy) {
+    const r = renderer.domElement.getBoundingClientRect();
+    puntero.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(puntero, camera);
+    const p = new THREE.Vector3();
+    return raycaster.ray.intersectPlane(plano0, p) ? p : null;
+  }
+  function limitarMapa() {
+    const P = JH.plano, t = controls.target;
+    const cx = Math.min(P.cols + 2, Math.max(-2, t.x)), cz = Math.min(P.rows + 2, Math.max(-2, t.z));
+    const d = new THREE.Vector3(cx - t.x, 0, cz - t.z);
+    if (d.lengthSq() > 0) { t.add(d); camera.position.add(d); }
+  }
+  // Acerca o aleja manteniendo fijo el punto del piso que está bajo el dedo o el mouse
+  function zoomEn(cx, cy, factor) {
+    const p = suelo(cx, cy); if (!p) return;
+    const dist = camera.position.distanceTo(controls.target);
+    const nueva = Math.max(controls.minDistance, Math.min(controls.maxDistance, dist / factor));
+    const k = nueva / dist;
+    camera.position.sub(p).multiplyScalar(k).add(p);
+    controls.target.sub(p).multiplyScalar(k).add(p);
+    controls.target.y = 0;
+  }
+  // Vuela suavemente hasta un punto del piso
+  function volarA(p, distancia) {
+    const dir = camera.position.clone().sub(controls.target);
+    const d = Math.max(controls.minDistance, Math.min(dir.length(), distancia || dir.length()));
+    vuelo = {
+      t: 0, desdeT: controls.target.clone(), desdeC: camera.position.clone(),
+      haciaT: new THREE.Vector3(p.x, 0, p.z), haciaC: new THREE.Vector3(p.x, 0, p.z).add(dir.setLength(d)),
+    };
+  }
+
   function enfocar(id) {
     const g = JH.gente.get(id); if (!g) return;
     seguir = id;
@@ -377,12 +425,54 @@
     scene.fog = new THREE.Fog(0x0a0a0b, 40, 85);
     camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
     camera.position.set(24, 26, 40);
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    // Como un mapa: un dedo (o clic izquierdo) mueve la oficina, dos dedos hacen zoom y giran,
+    // clic derecho gira. El zoom (rueda y pellizco) es nuestro para que acerque justo donde apuntas.
+    controls = new THREE.MapControls(camera, renderer.domElement);
     controls.target.set(24, 0, 13);
-    controls.enableDamping = true; controls.dampingFactor = 0.08;
-    controls.maxPolarAngle = Math.PI * 0.46; controls.minDistance = 3; controls.maxDistance = 70;
-    controls.screenSpacePanning = false;
-    controls.addEventListener("start", () => { seguir = null; });
+    controls.enableDamping = true; controls.dampingFactor = 0.1;
+    controls.maxPolarAngle = Math.PI * 0.47; controls.minDistance = 2.5; controls.maxDistance = 75;
+    controls.screenSpacePanning = false; controls.enableZoom = false;
+    controls.panSpeed = 1.2; controls.rotateSpeed = 0.6;
+    controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
+    controls.addEventListener("start", () => { seguir = null; vuelo = null; });
+
+    const el = renderer.domElement;
+    el.addEventListener("wheel", (e) => {
+      e.preventDefault(); seguir = null; vuelo = null;
+      zoomEn(e.clientX, e.clientY, Math.pow(1.0012, -Math.max(-300, Math.min(300, e.deltaY))));
+    }, { passive: false });
+    const toques = new Map();
+    const medio = () => { const [a, b] = [...toques.values()]; return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.hypot(a[0] - b[0], a[1] - b[1])]; };
+    el.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "touch") return;
+      toques.set(e.pointerId, [e.clientX, e.clientY]);
+      if (toques.size === 2) { const [mx, my, d] = medio(); pellizco = { mx, my, d, ancla: suelo(mx, my) }; }
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (!toques.has(e.pointerId)) return;
+      toques.set(e.pointerId, [e.clientX, e.clientY]);
+      if (toques.size === 2 && pellizco) {
+        const [mx, my, d] = medio();
+        if (pellizco.d > 0 && d > 0) {
+          const dist = camera.position.distanceTo(controls.target);
+          const nueva = Math.max(controls.minDistance, Math.min(controls.maxDistance, dist * (pellizco.d / d)));
+          camera.position.sub(controls.target).setLength(nueva).add(controls.target);
+        }
+        pellizco.mx = mx; pellizco.my = my; pellizco.d = d;
+      }
+    });
+    const fin = (e) => { toques.delete(e.pointerId); if (toques.size < 2) pellizco = null; };
+    el.addEventListener("pointerup", fin); el.addEventListener("pointercancel", fin);
+    // Doble toque o doble clic: acercarse justo ahí
+    let ultimoToque = 0, ultimoXY = [0, 0];
+    el.addEventListener("pointerup", (e) => {
+      const ahora = performance.now();
+      if (ahora - ultimoToque < 320 && Math.hypot(e.clientX - ultimoXY[0], e.clientY - ultimoXY[1]) < 30) {
+        const p = suelo(e.clientX, e.clientY);
+        if (p) { seguir = null; volarA(p, camera.position.distanceTo(controls.target) * 0.45); }
+        ultimoToque = 0;
+      } else { ultimoToque = ahora; ultimoXY = [e.clientX, e.clientY]; }
+    });
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1a1c, 0.42));
     const sol = new THREE.DirectionalLight(0xffffff, 0.72);
@@ -418,13 +508,13 @@
     ocultar() { activo = false; },
     enfocar,
     acercar(f) {
-      const dir = camera.position.clone().sub(controls.target);
-      const nueva = Math.max(controls.minDistance, Math.min(controls.maxDistance, dir.length() / f));
-      camera.position.copy(controls.target.clone().add(dir.setLength(nueva)));
+      const r = renderer.domElement.getBoundingClientRect();
+      seguir = null; vuelo = null;
+      zoomEn(r.left + r.width / 2, r.top + r.height / 2, f);
     },
     todo() {
       seguir = null;
-      controls.target.set(24, 0, 13); camera.position.set(24, 26, 40);
+      vuelo = { t: 0, desdeT: controls.target.clone(), desdeC: camera.position.clone(), haciaT: new THREE.Vector3(24, 0, 13), haciaC: new THREE.Vector3(24, 26, 40) };
     },
   };
 })();
