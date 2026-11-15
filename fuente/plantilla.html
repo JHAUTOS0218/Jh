@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual de marca JH AUTOS</title>
+<style>
+@font-face{font-family:"Monument";src:url(%%FUENTE_TITULOS%%) format("%%FUENTE_TITULOS_FMT%%");font-weight:400;font-display:block}
+@font-face{font-family:"Inter";src:url(%%INTER_400%%) format("woff2");font-weight:400;font-display:block}
+@font-face{font-family:"Inter";src:url(%%INTER_500%%) format("woff2");font-weight:500;font-display:block}
+@font-face{font-family:"Inter";src:url(%%INTER_600%%) format("woff2");font-weight:600;font-display:block}
+
+:root{
+  --negro:#000000; --blanco:#FFFFFF; --plata:#B4B7BB;
+  --grafito:#1A1A1A; --gris:#8A8A8A;
+  --logo-b:url(%%LOGO_BLANCO%%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--negro)}
+body{font-family:"Inter",sans-serif;color:var(--blanco);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+img{display:block}
+
+/* ---------- Página: lienzo 1600 x 900, escalable ---------- */
+.sec{container-type:inline-size;width:100%}
+.page{
+  --u:calc(100cqw / 1600);
+  position:relative;aspect-ratio:16/9;overflow:hidden;
+  padding:calc(80*var(--u)) calc(96*var(--u)) calc(116*var(--u));
+  display:flex;flex-direction:column;
+}
+.oscura{background:var(--negro);color:var(--blanco);--nota:var(--gris);--dato:var(--plata);--linea:var(--plata)}
+.clara{background:var(--blanco);color:var(--negro);--nota:var(--grafito);--dato:var(--negro);--linea:var(--gris)}
+
+.hd{display:flex;align-items:baseline;gap:calc(28*var(--u));margin-bottom:calc(48*var(--u))}
+.num{font-size:calc(16*var(--u));font-weight:500;letter-spacing:.12em;color:var(--dato)}
+h1,h2,h3,.mono{font-family:"Monument",sans-serif;font-weight:400;text-transform:uppercase}
+h2{font-size:calc(40*var(--u));letter-spacing:.2em;line-height:1}
+h3{font-size:calc(17*var(--u));letter-spacing:.24em;line-height:1.2}
+.ft{position:absolute;left:calc(96*var(--u));right:calc(96*var(--u));bottom:calc(44*var(--u));display:flex;justify-content:space-between;font-size:calc(13*var(--u));letter-spacing:.14em;text-transform:uppercase;color:var(--nota)}
+p{font-size:calc(20*var(--u));line-height:1.5}
+.lead{font-size:calc(24*var(--u));line-height:1.45;max-width:calc(620*var(--u))}
+.nota{font-size:calc(16*var(--u));line-height:1.5;color:var(--nota)}
+.dato{font-size:calc(15*var(--u));letter-spacing:.08em;color:var(--dato);font-variant-numeric:tabular-nums}
+.regla{height:1px;background:var(--linea)}
+
+/* ---------- 1 Portada ---------- */
+.portada{align-items:center;justify-content:center;gap:calc(56*var(--u))}
+.portada .logo{width:calc(620*var(--u))}
+.portada h1{font-size:calc(15*var(--u));letter-spacing:.6em;margin-right:-.6em}
+.portada .ft{justify-content:center}
+
+/* ---------- 2 Logo ---------- */
+.dividida{padding:0;flex-direction:row}
+.mitad{flex:1;padding:calc(80*var(--u)) calc(96*var(--u));display:flex;flex-direction:column}
+.mitad .lienzo{flex:1;display:flex;align-items:center;justify-content:center}
+.mitad .lienzo img{width:calc(440*var(--u))}
+.mitad .uso{min-height:calc(160*var(--u));display:flex;flex-direction:column;gap:calc(14*var(--u));max-width:calc(560*var(--u));padding-bottom:calc(40*var(--u))}
+.mitad .hd-vacio{height:calc(40*var(--u));margin-bottom:calc(48*var(--u))}
+
+/* ---------- 3 Zona de respeto ---------- */
+.cols{flex:1;display:flex;gap:calc(64*var(--u));align-items:center}
+.texto{width:calc(420*var(--u));flex:none;display:flex;flex-direction:column;gap:calc(24*var(--u))}
+.diagrama-wrap{flex:1;display:flex;justify-content:center;align-items:center}
+.zona{position:relative;width:calc((%%ZW%% + 2*%%ZX%%)*var(--u));height:calc((%%ZH%% + 2*%%ZX%%)*var(--u));border:1px dashed var(--negro)}
+.zona .logo{position:absolute;left:calc(%%ZX%%*var(--u));top:calc(%%ZX%%*var(--u));width:calc(%%ZW%%*var(--u))}
+.zona .caja-logo{position:absolute;left:calc(%%ZX%%*var(--u));top:calc(%%ZX%%*var(--u));width:calc(%%ZW%%*var(--u));height:calc(%%ZH%%*var(--u));outline:1px solid var(--gris)}
+.zona .x{position:absolute;width:calc(%%ZX%%*var(--u));height:calc(%%ZX%%*var(--u));background:var(--plata);display:flex;align-items:center;justify-content:center;font-family:"Monument";font-size:calc(min(26, %%ZX%%*0.4)*var(--u));color:var(--negro)}
+.zona .jbox{position:absolute;
+  left:calc((%%ZX%% + %%ZW%%*%%JL%%)*var(--u));top:calc((%%ZX%% + %%ZH%%*%%JT%%)*var(--u));
+  width:calc(%%ZW%%*%%JW%%*var(--u));height:calc(%%ZH%%*%%JH%%*var(--u));outline:2px solid var(--negro);outline-offset:2px}
+.zona .cota{position:absolute;top:calc((%%ZX%% + %%ZH%%*%%JT%%)*var(--u));height:calc(%%ZH%%*%%JH%%*var(--u));
+  left:calc(-40*var(--u));width:calc(14*var(--u));border:1px solid var(--negro);border-left:0}
+.zona .cota span{position:absolute;right:calc(22*var(--u));top:50%;transform:translateY(-50%);font-family:"Monument";font-size:calc(18*var(--u))}
+
+/* ---------- 4 Tamaño mínimo ---------- */
+.dos{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:calc(64*var(--u))}
+.panel{display:flex;flex-direction:column;gap:calc(20*var(--u))}
+.escena{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+.canvas1080{position:relative;width:calc(420*var(--u));height:calc(420*var(--u));background:var(--grafito);outline:1px solid var(--gris)}
+.canvas1080 .logo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(420*240/1080*var(--u))}
+.medida{position:absolute;display:flex;align-items:center;justify-content:center;font-size:calc(14*var(--u));letter-spacing:.08em;color:var(--plata);font-variant-numeric:tabular-nums}
+.medida.h{height:calc(24*var(--u));border-left:1px solid var(--plata);border-right:1px solid var(--plata)}
+.medida.h::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--plata)}
+.medida.h span{position:relative;background:inherit;padding:0 calc(8*var(--u))}
+.canvas1080 .m-logo{left:calc((420 - 420*240/1080)/2*var(--u));width:calc(420*240/1080*var(--u));top:calc((210 - 420*240/1080*%%AR%%/2 - 40)*var(--u));background:var(--grafito)}
+.canvas1080 .m-lienzo{left:0;width:100%;top:calc(-40*var(--u));background:var(--negro)}
+.tarjeta{position:relative;width:calc(85*4.4*var(--u));height:calc(55*4.4*var(--u));background:var(--negro);outline:1px solid var(--gris)}
+.tarjeta .logo{position:absolute;left:calc(8*4.4*var(--u));bottom:calc(8*4.4*var(--u));width:calc(30*4.4*var(--u))}
+.tarjeta .m-logo{left:calc(8*4.4*var(--u));width:calc(30*4.4*var(--u));bottom:calc((8*4.4 + 30*4.4*%%AR%% + 14)*var(--u));background:var(--negro)}
+.tarjeta .m-tarjeta{left:0;width:100%;top:calc(-40*var(--u));background:var(--negro)}
+
+/* ---------- 5 Usos incorrectos ---------- */
+.malos{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:calc(28*var(--u)) calc(32*var(--u))}
+.malo{display:flex;flex-direction:column;gap:calc(14*var(--u))}
+.malo .t{position:relative;flex:1;background:var(--negro);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.malo .t img,.malo .t .tinta{width:calc(250*var(--u))}
+.malo .t svg.tache{position:absolute;inset:0;width:100%;height:100%}
+.malo .cap{display:flex;gap:calc(14*var(--u));align-items:baseline}
+.malo .cap h3{font-size:calc(14*var(--u));white-space:nowrap}
+.malo .cap .nota{font-size:calc(15*var(--u))}
+.estirado{transform:scale(1.5,.72)}
+.tinta{aspect-ratio:1/%%AR%%;background:var(--plata);-webkit-mask:var(--logo-b) center/contain no-repeat;mask:var(--logo-b) center/contain no-repeat}
+.sombra{filter:drop-shadow(calc(9*var(--u)) calc(9*var(--u)) 0 var(--gris))}
+.contorno{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)}
+.rotado{transform:rotate(-14deg)}
+.foto-detalle,.malo .t.foto-detalle{background:url(%%FOTO_DETALLE%%) center/cover}
+
+/* ---------- 6 Logo sobre fotografía ---------- */
+.fotos{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:calc(48*var(--u))}
+.foto-ej{display:flex;flex-direction:column;gap:calc(16*var(--u))}
+.foto{position:relative;flex:1;overflow:hidden}
+.foto.oscura-zona{background:url(%%FOTO_ZONA_OSCURA%%) center/cover}
+.foto.oscura-zona .logo{position:absolute;left:50%;top:21%;transform:translate(-50%,-50%);width:calc(230*var(--u))}
+.foto .franja{position:absolute;left:0;right:0;bottom:0;height:30%;background:var(--negro);display:flex;align-items:center;justify-content:center}
+.foto .franja .logo{width:calc(230*var(--u))}
+.foto-ej .cap{display:flex;gap:calc(14*var(--u));align-items:baseline}
+
+/* ---------- 7 Colores ---------- */
+.muestras{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(24*var(--u));height:calc(380*var(--u))}
+.muestra{padding:calc(32*var(--u));display:flex;flex-direction:column;justify-content:space-between}
+.muestra h3{font-size:calc(22*var(--u))}
+.muestra dl{display:grid;grid-template-columns:calc(64*var(--u)) 1fr;row-gap:calc(6*var(--u));font-size:calc(16*var(--u));font-variant-numeric:tabular-nums}
+.muestra dt{font-weight:600;letter-spacing:.08em}
+.m-negro{background:var(--negro);color:var(--blanco)}
+.m-blanco{background:var(--blanco);color:var(--negro);outline:1px solid var(--gris);outline-offset:-1px}
+.m-plata{background:var(--plata);color:var(--negro)}
+.fila-baja{display:grid;grid-template-columns:2fr 1fr;gap:calc(48*var(--u));margin-top:calc(40*var(--u))}
+.barra{display:flex;height:calc(56*var(--u));outline:1px solid var(--gris);outline-offset:-1px}
+.barra div{display:flex;align-items:center;padding:0 calc(16*var(--u));font-size:calc(15*var(--u));font-weight:600;letter-spacing:.06em}
+.barra .b-n{width:70%;background:var(--negro);color:var(--blanco)}
+.barra .b-b{width:25%;background:var(--blanco);color:var(--negro)}
+.barra .b-p{width:5%;background:var(--plata)}
+.barra-ley{display:flex;margin-top:calc(10*var(--u));font-size:calc(14*var(--u))}
+.apoyo{display:flex;flex-direction:column;gap:calc(12*var(--u))}
+.apoyo .sw{display:flex;align-items:center;gap:calc(16*var(--u))}
+.apoyo .chip{width:calc(56*var(--u));height:calc(56*var(--u));flex:none}
+
+/* ---------- 8 Tipografía ---------- */
+.tipos{display:grid;grid-template-columns:1fr 1fr;gap:calc(64*var(--u))}
+.tipo{display:flex;flex-direction:column;gap:calc(16*var(--u))}
+.tipo .muestra-grande{font-size:calc(72*var(--u));line-height:1}
+.tipo .alfabeto{font-size:calc(19*var(--u));line-height:1.6;word-break:break-all}
+.alfabeto.m{font-family:"Monument";letter-spacing:.12em}
+.escala{margin-top:calc(44*var(--u));display:flex;flex-direction:column}
+.escala .fila{display:grid;grid-template-columns:calc(220*var(--u)) 1fr;align-items:baseline;padding:calc(14*var(--u)) 0;border-top:1px solid var(--grafito)}
+.escala .fila:first-child{border-top-color:var(--plata)}
+
+/* ---------- 9 Aplicaciones ---------- */
+.apps{flex:1;display:flex;gap:calc(56*var(--u));align-items:flex-end;justify-content:center}
+.app{display:flex;flex-direction:column;gap:calc(14*var(--u))}
+.mock{--k:calc(100cqw / 1080);container-type:inline-size;position:relative;width:calc(318*var(--u));background:var(--negro);overflow:hidden;color:var(--blanco)}
+.mock .in{--k:calc(100cqw / 1080);position:absolute;inset:0}
+.m-story{aspect-ratio:1080/1920}
+.m-feed{aspect-ratio:1080/1350}
+.m-reel{aspect-ratio:1080/1920}
+.ph{position:absolute;background:var(--gris);display:flex;align-items:center;justify-content:center;color:var(--negro);font-size:calc(30*var(--k));font-weight:600;letter-spacing:.2em}
+.mock .lg{position:absolute}
+.mock .modelo{position:absolute;font-size:calc(38*var(--k));font-weight:600;letter-spacing:.24em;color:var(--plata)}
+.mock .titulo{position:absolute;font-family:"Monument";text-transform:uppercase;line-height:1.28;letter-spacing:.06em}
+
+/* ---------- Pantallas angostas ---------- */
+@media screen and (max-width:760px){
+  .page{--u:calc(100cqw / 900);aspect-ratio:auto;padding:48px 16px 72px}
+  .escena{padding:56px 0 24px}
+  .zona{zoom:.72;margin:24px 0}
+  .zona .cota{display:none}
+  .malo .cap{flex-direction:column;gap:4px}
+  .muestra dl{grid-template-columns:56px 1fr}
+  .mitad .hd[aria-hidden]{display:none}
+  .page p,.lead{font-size:max(15px,calc(24*var(--u)))}
+  .nota,.malo .cap .nota{font-size:max(13px,calc(16*var(--u)))}
+  .ft{left:16px;right:16px;bottom:24px;font-size:11px}
+  h2{font-size:max(20px,calc(40*var(--u)))}
+  h3{font-size:max(12px,calc(17*var(--u)))}
+  .dividida{flex-direction:column;padding:0}
+  .mitad{padding:48px 16px}
+  .mitad .lienzo{padding:48px 0}
+  .cols,.dos,.fotos,.tipos,.fila-baja,.muestras{display:flex;flex-direction:column;height:auto}
+  .texto{width:auto}
+  .muestra{min-height:200px}
+  .malos{grid-template-columns:1fr 1fr;grid-template-rows:none}
+  .malo .t{min-height:140px}
+  .foto{min-height:220px}
+  .apps{flex-wrap:wrap;align-items:flex-start}
+  .mock{width:calc(100vw - 32px)}
+  .escala .fila{grid-template-columns:1fr}
+  .dato,.barra div,.muestra dl{font-size:max(12px,calc(15*var(--u)))}
+}
+
+/* ---------- Impresión: una sección por página ---------- */
+@page{size:1600px 900px;margin:0}
+@media print{
+  html,body{width:1600px}
+  .sec{width:1600px;height:900px;break-after:page;page-break-after:always}
+  .sec:last-child{break-after:auto;page-break-after:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- 1 PORTADA -->
+<section class="sec" id="portada">
+  <div class="page oscura portada">
+    <img class="logo" src="%%LOGO_BLANCO%%" alt="Logo JH AUTOS">
+    <h1>Manual de marca</h1>
+    <div class="ft"><span>Cartagena, Colombia · 2026</span></div>
+  </div>
+</section>
+
+<!-- 2 LOGO -->
+<section class="sec" id="logo">
+  <div class="page dividida">
+    <div class="mitad oscura">
+      <div class="hd"><span class="num">01</span><h2>Logo</h2></div>
+      <div class="lienzo"><img src="%%LOGO_BLANCO%%" alt="Logo blanco sobre negro"></div>
+      <div class="uso">
+        <h3>Principal</h3>
+        <p>Blanco sobre negro. Es la versión por defecto: redes sociales, fachada, vehículos rotulados y piezas digitales.</p>
+      </div>
+    </div>
+    <div class="mitad clara">
+      <div class="hd" aria-hidden="true" style="visibility:hidden"><span class="num">01</span><h2>Logo</h2></div>
+      <div class="lienzo"><img src="%%LOGO_NEGRO%%" alt="Logo negro sobre blanco"></div>
+      <div class="uso">
+        <h3>Secundaria</h3>
+        <p>Negro sobre blanco. Solo cuando el fondo es claro: documentos, contratos, papelería e impresos sobre papel blanco.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ZONA DE RESPETO -->
+<section class="sec" id="zona">
+  <div class="page clara">
+    <div class="hd"><span class="num">02</span><h2>Zona de respeto</h2></div>
+    <div class="cols">
+      <div class="texto">
+        <p class="lead">La altura de la J define x: el espacio libre mínimo alrededor del logo.</p>
+        <p class="nota">Ningún texto, borde, imagen o elemento gráfico entra en esta zona. Es un mínimo: si hay espacio, deja más.</p>
+      </div>
+      <div class="diagrama-wrap">
+        <div class="zona">
+          <div class="caja-logo"></div>
+          <img class="logo" src="%%LOGO_NEGRO%%" alt="Logo con zona de respeto">
+          <div class="jbox"></div>
+          <div class="cota"><span>x</span></div>
+          <div class="x" style="left:calc((%%ZX%% + %%ZW%%/2 - %%ZX%%/2)*var(--u));top:0">x</div>
+          <div class="x" style="left:calc((%%ZX%% + %%ZW%%/2 - %%ZX%%/2)*var(--u));bottom:0">x</div>
+          <div class="x" style="left:0;top:calc((%%ZX%% + %%ZH%%/2 - %%ZX%%/2)*var(--u))">x</div>
+          <div class="x" style="right:0;top:calc((%%ZX%% + %%ZH%%/2 - %%ZX%%/2)*var(--u))">x</div>
+        </div>
+      </div>
+    </div>
+    <div class="ft"><span>Manual de marca</span><span>02 / 08</span></div>
+  </div>
+</section>
+
+<!-- 4 TAMAÑO MÍNIMO -->
+<section class="sec" id="tamano">
+  <div class="page oscura">
+    <div class="hd"><span class="num">03</span><h2>Tamaño mínimo</h2></div>
+    <div class="dos">
+      <div class="panel">
+        <h3>Digital</h3>
+        <p class="nota">240 px de ancho en un lienzo de 1080 px.</p>
+        <div class="escena">
+          <div class="canvas1080">
+            <div class="medida h m-lienzo"><span>1080 px</span></div>
+            <div class="medida h m-logo"><span>240 px</span></div>
+            <img class="logo" src="%%LOGO_BLANCO%%" alt="Logo a 240 px">
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Impreso</h3>
+        <p class="nota">30 mm de ancho. Ejemplo en tarjeta de 85 × 55 mm, a escala.</p>
+        <div class="escena">
+          <div class="tarjeta">
+            <div class="medida h m-tarjeta"><span>85 mm</span></div>
+            <div class="medida h m-logo"><span>30 mm</span></div>
+            <img class="logo" src="%%LOGO_BLANCO%%" alt="Logo a 30 mm">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ft"><span>Por debajo de estas medidas el logo pierde nitidez</span><span>03 / 08</span></div>
+  </div>
+</section>
+
+<!-- 5 USOS INCORRECTOS -->
+<section class="sec" id="incorrectos">
+  <div class="page clara">
+    <div class="hd"><span class="num">04</span><h2>Usos incorrectos</h2></div>
+    <div class="malos">
+      <div class="malo"><div class="t"><img class="estirado" src="%%LOGO_BLANCO%%" alt=""><svg class="tache" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="cap"><h3>Estirado</h3><span class="nota">No deformes sus proporciones.</span></div></div>
+      <div class="malo"><div class="t"><div class="tinta"></div><svg class="tache" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="cap"><h3>Otro color</h3><span class="nota">Solo blanco o negro.</span></div></div>
+      <div class="malo"><div class="t"><img class="sombra" src="%%LOGO_BLANCO%%" alt=""><svg class="tache" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="cap"><h3>Con sombra</h3><span class="nota">Sin sombras ni efectos.</span></div></div>
+      <div class="malo"><div class="t"><img class="contorno" src="%%LOGO_NEGRO%%" alt=""><svg class="tache" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="cap"><h3>Con contorno</h3><span class="nota">Sin bordes ni trazos.</span></div></div>
+      <div class="malo"><div class="t"><img class="rotado" src="%%LOGO_BLANCO%%" alt=""><svg class="tache" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="cap"><h3>Rotado</h3><span class="nota">Siempre horizontal.</span></div></div>
+      <div class="malo"><div class="t foto-detalle"><img src="%%LOGO_BLANCO%%" alt=""><svg class="tache" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="#000" stroke-width="5" vector-effect="non-scaling-stroke"/><line x1="0" y1="100" x2="100" y2="0" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="cap"><h3>Foto sin franja</h3><span class="nota">Usa una franja negra.</span></div></div>
+    </div>
+    <div class="ft"><span>Manual de marca</span><span>04 / 08</span></div>
+  </div>
+</section>
+
+<!-- 6 LOGO SOBRE FOTOGRAFÍA -->
+<section class="sec" id="fotografia">
+  <div class="page oscura">
+    <div class="hd"><span class="num">05</span><h2>Logo sobre fotografía</h2></div>
+    <div class="fotos">
+      <div class="foto-ej">
+        <div class="foto oscura-zona"><img class="logo" src="%%LOGO_BLANCO%%" alt="Logo sobre zona oscura"></div>
+        <div class="cap"><h3>Correcto</h3><span class="nota">Sobre una zona oscura y limpia de la foto.</span></div>
+      </div>
+      <div class="foto-ej">
+        <div class="foto foto-detalle"><div class="franja"><img class="logo" src="%%LOGO_BLANCO%%" alt="Logo sobre franja negra"></div></div>
+        <div class="cap"><h3>Correcto</h3><span class="nota">Sobre una franja negra a todo el ancho.</span></div>
+      </div>
+    </div>
+    <div class="ft"><span>Si la foto no tiene una zona oscura y uniforme, agrega la franja</span><span>05 / 08</span></div>
+  </div>
+</section>
+
+<!-- 7 COLORES -->
+<section class="sec" id="colores">
+  <div class="page clara">
+    <div class="hd"><span class="num">06</span><h2>Colores</h2></div>
+    <div class="muestras">
+      <div class="muestra m-negro"><h3>Negro</h3>
+        <dl><dt>HEX</dt><dd>#000000</dd><dt>RGB</dt><dd>0 · 0 · 0</dd><dt>CMYK</dt><dd>0 · 0 · 0 · 100</dd></dl></div>
+      <div class="muestra m-blanco"><h3>Blanco</h3>
+        <dl><dt>HEX</dt><dd>#FFFFFF</dd><dt>RGB</dt><dd>255 · 255 · 255</dd><dt>CMYK</dt><dd>0 · 0 · 0 · 0</dd></dl></div>
+      <div class="muestra m-plata"><h3>Plata</h3>
+        <dl><dt>HEX</dt><dd>#B4B7BB</dd><dt>RGB</dt><dd>180 · 183 · 187</dd><dt>CMYK</dt><dd>4 · 2 · 0 · 27</dd></dl></div>
+    </div>
+    <div class="fila-baja">
+      <div>
+        <div class="barra"><div class="b-n">70%</div><div class="b-b">25%</div><div class="b-p"></div></div>
+        <div class="barra-ley"><span style="width:70%">Negro</span><span style="width:25%">Blanco</span><span style="white-space:nowrap">Plata 5%</span></div>
+        <p class="nota" style="margin-top:calc(18*var(--u))">La plata se usa solo para datos y líneas finas. Nunca como fondo grande. Plata y gris van siempre sobre fondo oscuro.</p>
+      </div>
+      <div class="apoyo">
+        <span class="nota">Colores de apoyo</span>
+        <div class="sw"><div class="chip" style="background:var(--grafito)"></div><div><strong style="font-weight:600">Grafito</strong> · #1A1A1A<br><span class="nota">Cajas y fondos secundarios</span></div></div>
+        <div class="sw"><div class="chip" style="background:var(--gris)"></div><div><strong style="font-weight:600">Gris</strong> · #8A8A8A<br><span class="nota">Notas y textos de apoyo</span></div></div>
+      </div>
+    </div>
+    <div class="ft"><span>Manual de marca</span><span>06 / 08</span></div>
+  </div>
+</section>
+
+<!-- 8 TIPOGRAFÍA -->
+<section class="sec" id="tipografia">
+  <div class="page oscura">
+    <div class="hd"><span class="num">07</span><h2>Tipografía</h2></div>
+    <div class="tipos">
+      <div class="tipo">
+        <h3>Monument</h3>
+        <div class="muestra-grande mono">Aa</div>
+        <div class="alfabeto m">ABCDEFGHIJKLMNÑOPQRSTUVWXYZ<br>0123456789</div>
+        <p class="nota">Logo y títulos. Siempre en mayúscula, máximo 6 palabras.</p>
+      </div>
+      <div class="tipo">
+        <h3>Inter</h3>
+        <div class="muestra-grande">Aa</div>
+        <div class="alfabeto">ABCDEFGHIJKLMNÑOPQRSTUVWXYZ<br>abcdefghijklmnñopqrstuvwxyz 0123456789</div>
+        <p class="nota">Textos, datos y notas. Regular, Medium y SemiBold.</p>
+      </div>
+    </div>
+    <div class="escala">
+      <div class="fila"><span class="dato">Título · Monument 48</span><span class="mono" style="font-size:calc(48*var(--u));letter-spacing:.14em">Recibimos tu carro</span></div>
+      <div class="fila"><span class="dato">Subtítulo · Monument 24</span><span class="mono" style="font-size:calc(24*var(--u));letter-spacing:.18em">Modelo 2020</span></div>
+      <div class="fila"><span class="dato">Texto · Inter 20</span><span style="font-size:calc(20*var(--u))">Compra, venta y consignación de vehículos en Cartagena.</span></div>
+      <div class="fila"><span class="dato">Nota · Inter 16</span><span class="nota">Precio sujeto a revisión técnica. %%NOTA_FUENTE%%</span></div>
+    </div>
+    <div class="ft"><span>Manual de marca</span><span>07 / 08</span></div>
+  </div>
+</section>
+
+<!-- 9 APLICACIONES -->
+<section class="sec" id="aplicaciones">
+  <div class="page clara">
+    <div class="hd"><span class="num">08</span><h2>Aplicaciones</h2></div>
+    <div class="apps">
+      <div class="app">
+        <div class="mock m-story"><div class="in">
+          <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(420*var(--k));left:calc(330*var(--k));top:calc(170*var(--k))">
+          <div class="ph" style="left:0;right:0;top:calc(480*var(--k));height:calc(900*var(--k))">FOTO</div>
+          <div class="modelo" style="left:calc(96*var(--k));top:calc(1500*var(--k))">MODELO 2020</div>
+          <div class="titulo" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1580*var(--k));font-size:calc(62*var(--k))">Chevrolet Captiva Premier</div>
+        </div></div>
+        <h3>Historia</h3><span class="dato">1080 × 1920 px</span>
+      </div>
+      <div class="app">
+        <div class="mock m-feed"><div class="in">
+          <div class="ph" style="left:0;right:0;top:0;height:calc(860*var(--k))">FOTO</div>
+          <div class="modelo" style="left:calc(80*var(--k));top:calc(940*var(--k))">MODELO 2017</div>
+          <div class="titulo" style="left:calc(80*var(--k));right:calc(80*var(--k));top:calc(1010*var(--k));font-size:calc(56*var(--k))">Audi A4 TFSI Ambition</div>
+          <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(260*var(--k));left:calc(80*var(--k));bottom:calc(72*var(--k))">
+        </div></div>
+        <h3>Post de feed</h3><span class="dato">1080 × 1350 px</span>
+      </div>
+      <div class="app">
+        <div class="mock m-reel"><div class="in">
+          <div class="ph" style="left:0;right:0;top:0;bottom:0">FOTO</div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:calc(640*var(--k));background:var(--negro)"></div>
+          <div class="titulo" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1380*var(--k));font-size:calc(80*var(--k))">Recibimos tu carro</div>
+          <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(300*var(--k));left:calc(96*var(--k));bottom:calc(120*var(--k))">
+        </div></div>
+        <h3>Portada de reel</h3><span class="dato">1080 × 1920 px</span>
+      </div>
+    </div>
+    <div class="ft"><span>Manual de marca</span><span>08 / 08</span></div>
+  </div>
+</section>
+
+</body>
+</html>
