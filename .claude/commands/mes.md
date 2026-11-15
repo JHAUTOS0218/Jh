@@ -13,3 +13,5 @@ Corre el cierre de mes de JH AUTOS. Usa los subagentes en este orden:
 Al final, resume a Julián en español sencillo: cómo cerró el mes en plata, qué funcionó en contenido, el plan del mes y las decisiones que tiene pendientes.
 
 Notas de Julián (puede estar vacío): $ARGUMENTS
+
+Oficina en vivo: mientras corre este comando, actualiza el estado de cada empleado en la página de la oficina como dice la sección "Oficina en vivo" de CLAUDE.md (trabajando al empezar, libre o esperando al terminar).

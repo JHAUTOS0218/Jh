@@ -12,3 +12,5 @@ $ARGUMENTS
 3. Usa el subagente **secretaria** para anotar en Pendientes: fotos, publicar en los 5 canales y la historia de "carro nuevo".
 
 Al final dile a Julián qué quedó registrado, las ideas propuestas y qué le falta hacer.
+
+Oficina en vivo: mientras corre este comando, actualiza el estado de cada empleado en la página de la oficina como dice la sección "Oficina en vivo" de CLAUDE.md (trabajando al empezar, libre o esperando al terminar).

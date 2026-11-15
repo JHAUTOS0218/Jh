@@ -21,3 +21,5 @@ Al final, responde a Julián en español sencillo:
 - Los datos que faltan y solo él tiene.
 
 Notas de Julián para esta ronda (puede estar vacío): $ARGUMENTS
+
+Oficina en vivo: mientras corre este comando, actualiza el estado de cada empleado en la página de la oficina como dice la sección "Oficina en vivo" de CLAUDE.md (trabajando al empezar, libre o esperando al terminar).

@@ -12,3 +12,5 @@ Usa el subagente **contador** para:
 4. Mostrar la utilidad real y el margen.
 
 Después usa el subagente **secretaria** para anotar en Pendientes lo que falta para cerrar: traspaso, entrega con la experiencia de marca (funda, moño, champaña, video) y pedir el permiso del cliente para publicar la entrega.
+
+Oficina en vivo: mientras corre este comando, actualiza el estado de cada empleado en la página de la oficina como dice la sección "Oficina en vivo" de CLAUDE.md (trabajando al empezar, libre o esperando al terminar).

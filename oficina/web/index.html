@@ -1,0 +1,422 @@
+<title>Oficina JH AUTOS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Open+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: oficina a pantalla completa (lienzo con zoom) + panel del equipo a la derecha; en celular el panel va debajo. */
+:root {
+  --negro: #000000;
+  --grafito: #141415;
+  --linea: #2a2b2d;
+  --blanco: #ffffff;
+  --plata: #b4b7bb;
+  --gris: #8a8a8a;
+  --trabajando: #ffffff;
+  --espera: #e8c46a;
+  --display: "Michroma", "Arial Black", system-ui, sans-serif;
+  --texto: "Open Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--negro); color: var(--blanco); font-family: var(--texto); overflow: hidden; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--negro); }
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
+header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--linea);
+}
+h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
+.vivo { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--plata); font-variant-numeric: tabular-nums; }
+.punto { width: 8px; height: 8px; border-radius: 50%; background: var(--gris); }
+.punto.on { background: var(--blanco); box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
+main { min-height: 0; display: grid; grid-template-columns: 1fr 300px; }
+.escena { position: relative; min-width: 0; min-height: 0; background: #0a0a0b; touch-action: none; }
+canvas { display: block; width: 100%; height: 100%; cursor: grab; image-rendering: pixelated; }
+canvas.arrastre { cursor: grabbing; }
+.zoom { position: absolute; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
+.zoom button {
+  width: 40px; height: 40px; border: 1px solid var(--linea); background: var(--grafito); color: var(--blanco);
+  font: 600 18px var(--texto); border-radius: 6px; cursor: pointer;
+}
+.zoom button:focus-visible, .persona:focus-visible { outline: 2px solid var(--plata); outline-offset: 2px; }
+.zoom button.txt { font-size: 10px; letter-spacing: .06em; }
+aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; padding-block: 14px; padding-left: 14px; padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+.zona { margin: 0 0 6px; font-family: var(--display); font-size: 10px; letter-spacing: .14em; color: var(--plata); text-transform: uppercase; }
+.grupo { display: grid; gap: 6px; margin-bottom: 18px; }
+.persona {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: baseline; text-align: left; width: 100%;
+  background: var(--grafito); border: 1px solid transparent; color: var(--blanco); border-radius: 6px;
+  padding: 9px 10px; cursor: pointer; font: inherit;
+}
+.persona.sel { border-color: var(--plata); }
+.nombre { font-weight: 700; font-size: 13px; }
+.estado { font-size: 11px; color: var(--gris); white-space: nowrap; }
+.estado.trabajando { color: var(--trabajando); }
+.estado.esperando { color: var(--espera); }
+.tarea { grid-column: 1 / -1; font-size: 12px; color: var(--plata); line-height: 1.4; min-width: 0; overflow-wrap: anywhere; }
+.nota { font-size: 11px; color: var(--gris); line-height: 1.5; margin: 4px 0 0; }
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; grid-template-rows: 58% 42%; }
+  aside { border-left: 0; border-top: 1px solid var(--linea); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { .punto.on { box-shadow: none; } }
+</style>
+
+<div class="app">
+  <header>
+    <h1>JH AUTOS · Oficina</h1>
+    <div class="vivo" aria-live="polite"><span class="punto" id="punto"></span><span id="vivoTxt">Conectando con la oficina…</span></div>
+  </header>
+  <main>
+    <div class="escena" id="escena">
+      <canvas id="lienzo" aria-label="Concesionario JH AUTOS en pixel art con los empleados trabajando"></canvas>
+      <div class="zoom">
+        <button id="mas" aria-label="Acercar">+</button>
+        <button id="menos" aria-label="Alejar">−</button>
+        <button id="ver" class="txt" aria-label="Ver toda la oficina">TODO</button>
+      </div>
+    </div>
+    <aside id="panel"></aside>
+  </main>
+</div>
+
+<script>
+(() => {
+  const EQUIPO = [
+    { id: "gerente", nombre: "Gerente", zona: "Gerencia", piel: "#e2b48e", pelo: "#1b1b1b", camisa: "#f2f2f2", pantalon: "#1a1a1a" },
+    { id: "secretaria", nombre: "Secretaria", zona: "Gerencia", piel: "#c8936a", pelo: "#3b2a20", camisa: "#b4b7bb", pantalon: "#1a1a1a", largo: true },
+    { id: "espia", nombre: "Espía", zona: "Contenido", piel: "#f1c7a3", pelo: "#2a2a2a", camisa: "#111111", pantalon: "#3a3a3d" },
+    { id: "creativo", nombre: "Creativo", zona: "Contenido", piel: "#b97b52", pelo: "#6b4a2f", camisa: "#f2f2f2", pantalon: "#2b2b2e", largo: true },
+    { id: "guionista", nombre: "Guionista", zona: "Contenido", piel: "#d9a47c", pelo: "#1b1b1b", camisa: "#2b2b2e", pantalon: "#111111" },
+    { id: "disenador", nombre: "Diseñador", zona: "Contenido", piel: "#8d5a3a", pelo: "#111111", camisa: "#b4b7bb", pantalon: "#1a1a1a" },
+    { id: "estratega-instagram", nombre: "Estratega de Instagram", zona: "Contenido", piel: "#f1c7a3", pelo: "#a8742f", camisa: "#111111", pantalon: "#3a3a3d", largo: true },
+    { id: "jefe-inventario", nombre: "Jefe de inventario", zona: "Operación", piel: "#c8936a", pelo: "#c9c9c9", camisa: "#f2f2f2", pantalon: "#1a1a1a" },
+    { id: "tasador", nombre: "Tasador", zona: "Operación", piel: "#d9a47c", pelo: "#2a2a2a", camisa: "#111111", pantalon: "#2b2b2e" },
+    { id: "contador", nombre: "Contador", zona: "Operación", piel: "#e2b48e", pelo: "#3b2a20", camisa: "#b4b7bb", pantalon: "#111111", largo: true },
+    { id: "estratega-pauta", nombre: "Estratega de pauta", zona: "Operación", piel: "#b97b52", pelo: "#1b1b1b", camisa: "#2b2b2e", pantalon: "#1a1a1a" },
+  ];
+  const TEXTO_ESTADO = { trabajando: "Trabajando", esperando: "Te necesita", libre: "Disponible" };
+
+  // ── Sprites de personas (12 px de ancho) ──
+  const CABEZA_FRENTE = ["....HHHH....", "...HHHHHH...", "..HHHHHHHH..", "..HSSSSSSH..", "..SSESSESS..", "..SSSSSSSS..", "...SSSSSS...", "....SSSS...."];
+  const CABEZA_ATRAS = ["....HHHH....", "...HHHHHH...", "..HHHHHHHH..", "..HHHHHHHH..", "..HHHHHHHH..", "..HHHHHHHH..", "...HHHHHH...", "....SSSS...."];
+  const LARGO = ["..HHHHHHHH..", "..HH....HH.."];
+  const TORSO = ["..CCCCCCCC..", ".SCCCCCCCCS.", ".SCCCCCCCCS.", ".SCCCCCCCCS.", "..CCCCCCCC.."];
+  const PIERNAS = [
+    ["..PPPPPPPP..", "..PPP..PPP..", "..PPP..PPP..", "..PPP..PPP..", "..BBB..BBB.."],
+    ["..PPPPPPPP..", "..PP...PPP..", "..PP...PPP..", "..PP....PP..", "..BB....BB.."],
+    ["..PPPPPPPP..", "..PPP...PP..", "..PPP...PP..", "..PP....PP..", "..BB....BB.."],
+  ];
+  const SENTADO = [
+    ["..CCCCCCCC..", ".CCCCCCCCCC.", ".CCCCCCCCCC.", ".SCCCCCCCCS.", ".SCCCCCCCCS."],
+    ["..CCCCCCCC..", ".CCCCCCCCCC.", ".SCCCCCCCCS.", ".SCCCCCCCCS.", ".CCCCCCCCCC."],
+  ];
+
+  const cache = new Map();
+  function sprite(p, clave, filas) {
+    const k = p.id + clave;
+    if (cache.has(k)) return cache.get(k);
+    const c = document.createElement("canvas");
+    c.width = 12; c.height = filas.length;
+    const x = c.getContext("2d");
+    const col = { H: p.pelo, S: p.piel, E: "#111111", C: p.camisa, P: p.pantalon, B: "#0b0b0b" };
+    filas.forEach((f, y) => [...f].forEach((ch, i) => { if (col[ch]) { x.fillStyle = col[ch]; x.fillRect(i, y, 1, 1); } }));
+    cache.set(k, c);
+    return c;
+  }
+  const cabello = (p, base) => p.largo ? base.slice(0, 6).concat(LARGO).concat(base.slice(8)) : base;
+  const figura = {
+    frente: (p, f) => sprite(p, "f" + f, cabello(p, CABEZA_FRENTE).concat(TORSO, PIERNAS[f])),
+    atras: (p, f) => sprite(p, "a" + f, cabello(p, CABEZA_ATRAS).concat(TORSO, PIERNAS[f])),
+    sentado: (p, f) => sprite(p, "s" + f, cabello(p, CABEZA_ATRAS).concat(SENTADO[f])),
+  };
+
+  // ── Estado ──
+  const lienzo = document.getElementById("lienzo");
+  const ctx = lienzo.getContext("2d");
+  const escena = document.getElementById("escena");
+  const panel = document.getElementById("panel");
+  let plano = null, fondo = null, seleccion = null;
+  const cam = { s: 2, x: 0, y: 0 };
+  const gente = new Map();
+  const estados = {};
+
+  function crearPersonas() {
+    EQUIPO.forEach((p) => {
+      const pt = puntoLibre();
+      gente.set(p.id, { p, x: pt[0] * 16 + 8, y: pt[1] * 16 + 15, ruta: [], sentado: false, dir: "frente", paso: 0, espera: Math.random() * 3 });
+    });
+  }
+
+  function caminable(c, r) { return plano.caminable[r] && plano.caminable[r][c] === "1"; }
+  function puntoLibre() {
+    const [c0, r0, c1, r1] = plano.zonaOficina;
+    for (let i = 0; i < 200; i++) {
+      const c = c0 + Math.floor(Math.random() * (c1 - c0)), r = r0 + Math.floor(Math.random() * (r1 - r0));
+      if (caminable(c, r) && !esSilla(c, r)) return [c, r];
+    }
+    return plano.puerta;
+  }
+  function esSilla(c, r) { return Object.values(plano.puestos).some((s) => s.silla[0] === c && s.silla[1] === r); }
+  function ruta(desde, hasta) {
+    const k = (c, r) => c + "," + r, prev = new Map([[k(...desde), null]]), cola = [desde];
+    while (cola.length) {
+      const [c, r] = cola.shift();
+      if (c === hasta[0] && r === hasta[1]) break;
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = [c + dc, r + dr];
+        if (!prev.has(k(...n)) && caminable(...n)) { prev.set(k(...n), [c, r]); cola.push(n); }
+      }
+    }
+    if (!prev.has(k(...hasta))) return [];
+    const out = [];
+    for (let n = hasta; n; n = prev.get(k(...n))) out.unshift(n);
+    return out.slice(1);
+  }
+  const tileDe = (g) => [Math.floor(g.x / 16), Math.floor((g.y - 1) / 16)];
+
+  function objetivo(g) {
+    const e = (estados[g.p.id] || {}).estado || "libre";
+    if (e === "trabajando" || e === "esperando") return plano.puestos[g.p.id].silla;
+    return null;
+  }
+
+  function actualizar(dt) {
+    for (const g of gente.values()) {
+      const meta = objetivo(g);
+      if (meta) {
+        const t = tileDe(g);
+        if (t[0] === meta[0] && t[1] === meta[1] && !g.ruta.length) {
+          g.sentado = true; g.x = meta[0] * 16 + 8; g.y = meta[1] * 16 + 15;
+        } else if (!g.ruta.length || g.meta !== meta) {
+          g.sentado = false; g.meta = meta; g.ruta = ruta(t, meta);
+          if (!g.ruta.length) { g.x = meta[0] * 16 + 8; g.y = meta[1] * 16 + 15; g.sentado = true; }
+        }
+      } else {
+        g.meta = null;
+        if (g.sentado) { g.sentado = false; g.espera = 1 + Math.random() * 2; }
+        if (!g.ruta.length) {
+          g.espera -= dt;
+          if (g.espera <= 0) { g.ruta = ruta(tileDe(g), puntoLibre()); g.espera = 3 + Math.random() * 5; }
+        }
+      }
+      if (g.ruta.length) {
+        const [c, r] = g.ruta[0];
+        const tx = c * 16 + 8, ty = r * 16 + 15, vel = 34 * dt;
+        const dx = tx - g.x, dy = ty - g.y, d = Math.hypot(dx, dy);
+        if (d <= vel) { g.x = tx; g.y = ty; g.ruta.shift(); }
+        else { g.x += (dx / d) * vel; g.y += (dy / d) * vel; }
+        g.dir = dy < -0.1 ? "atras" : "frente";
+        g.paso += dt * 8;
+      } else { g.paso = 0; }
+    }
+  }
+
+  // ── Dibujo ──
+  let t0 = performance.now(), reloj = 0;
+  function dibujar(ahora) {
+    const dt = Math.min(0.05, (ahora - t0) / 1000); t0 = ahora; reloj += dt;
+    if (plano) actualizar(dt);
+    const dpr = window.devicePixelRatio || 1;
+    const w = escena.clientWidth, h = escena.clientHeight;
+    if (lienzo.width !== Math.round(w * dpr) || lienzo.height !== Math.round(h * dpr)) {
+      lienzo.width = Math.round(w * dpr); lienzo.height = Math.round(h * dpr);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = "#0a0a0b"; ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+    if (!plano || !fondo) { requestAnimationFrame(dibujar); return; }
+    const s = cam.s * dpr;
+    ctx.imageSmoothingEnabled = false;
+    ctx.setTransform(s, 0, 0, s, Math.round(cam.x * dpr), Math.round(cam.y * dpr));
+    ctx.drawImage(fondo, 0, 0);
+
+    const orden = [...gente.values()].sort((a, b) => a.y - b.y);
+    for (const g of orden) {
+      const e = (estados[g.p.id] || {}).estado || "libre";
+      const x = Math.round(g.x - 6);
+      if (g.sentado) {
+        const tecleando = e === "trabajando";
+        const f = tecleando ? Math.floor(reloj * 6) % 2 : 0;
+        const spr = figura.sentado(g.p, f);
+        const y = Math.round(g.y - 15 - 6);
+        ctx.drawImage(spr, x, y);
+        ctx.fillStyle = "#121213"; ctx.fillRect(x + 1, y + 10, 10, 5);   // respaldo de la silla
+        ctx.fillStyle = "#1e1e20"; ctx.fillRect(x + 2, y + 11, 8, 3);
+        if (tecleando) {
+          const pc = plano.puestos[g.p.id].pc;
+          ctx.fillStyle = "#cfdcea"; ctx.fillRect(pc[0], pc[1], 10, 9);
+          ctx.fillStyle = "#7d8fa3";
+          for (let i = 0; i < 4; i++) ctx.fillRect(pc[0] + 1, pc[1] + 1 + i * 2, 3 + ((i * 3 + Math.floor(reloj * 3)) % 6), 1);
+        }
+        burbuja(g, e, x, y);
+      } else {
+        const f = g.ruta.length ? 1 + (Math.floor(g.paso) % 2) : 0;
+        const spr = figura[g.dir](g.p, f);
+        const y = Math.round(g.y - spr.height);
+        ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(x + 2, Math.round(g.y) - 1, 8, 2);
+        ctx.drawImage(spr, x, y);
+        burbuja(g, e, x, y);
+      }
+    }
+    // nombres en coordenadas de pantalla
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const mostrarTodos = cam.s >= 3.2;
+    for (const g of gente.values()) {
+      if (!mostrarTodos && seleccion !== g.p.id) continue;
+      const sx = (g.x * cam.s + cam.x) * dpr, sy = ((g.y - (g.sentado ? 26 : 24)) * cam.s + cam.y) * dpr;
+      ctx.font = `600 ${11 * dpr}px "Open Sans", system-ui, sans-serif`;
+      const tw = ctx.measureText(g.p.nombre).width;
+      ctx.fillStyle = seleccion === g.p.id ? "#ffffff" : "rgba(0,0,0,.78)";
+      ctx.fillRect(sx - tw / 2 - 5 * dpr, sy - 15 * dpr, tw + 10 * dpr, 17 * dpr);
+      ctx.fillStyle = seleccion === g.p.id ? "#000000" : "#ffffff";
+      ctx.textAlign = "center"; ctx.fillText(g.p.nombre, sx, sy - 2.5 * dpr);
+    }
+    requestAnimationFrame(dibujar);
+  }
+
+  function burbuja(g, e, x, y) {
+    if (e === "esperando") {
+      const by = y - 11 - (Math.floor(reloj * 2) % 2);
+      ctx.fillStyle = "#e8c46a"; ctx.fillRect(x + 2, by, 8, 9);
+      ctx.fillStyle = "#000"; ctx.fillRect(x + 5, by + 2, 2, 4); ctx.fillRect(x + 5, by + 7, 2, 1);
+    } else if (e === "trabajando") {
+      const n = Math.floor(reloj * 3) % 4;
+      ctx.fillStyle = "#ffffff";
+      for (let i = 0; i < n; i++) ctx.fillRect(x + 2 + i * 3, y - 4, 2, 2);
+    }
+  }
+
+  // ── Cámara: arrastrar, pellizcar, rueda ──
+  function limitar() {
+    const w = escena.clientWidth, h = escena.clientHeight;
+    const mw = plano.cols * 16 * cam.s, mh = plano.rows * 16 * cam.s;
+    cam.x = mw < w ? (w - mw) / 2 : Math.min(40, Math.max(w - mw - 40, cam.x));
+    cam.y = mh < h ? (h - mh) / 2 : Math.min(40, Math.max(h - mh - 40, cam.y));
+  }
+  function zoomEn(f, px, py) {
+    const ns = Math.max(0.8, Math.min(8, cam.s * f));
+    cam.x = px - (px - cam.x) * (ns / cam.s); cam.y = py - (py - cam.y) * (ns / cam.s); cam.s = ns; limitar();
+  }
+  function verOficina() {
+    const w = escena.clientWidth, h = escena.clientHeight;
+    const ancho = plano.cols * 16, alto = 21 * 16;
+    cam.s = Math.max(0.8, Math.min(w / ancho, h / alto));
+    cam.x = (w - ancho * cam.s) / 2; cam.y = Math.max(8, (h - alto * cam.s) / 2); limitar();
+  }
+  function centrarEn(g) {
+    const w = escena.clientWidth, h = escena.clientHeight;
+    cam.s = Math.max(cam.s, 4);
+    cam.x = w / 2 - g.x * cam.s; cam.y = h / 2 - (g.y - 10) * cam.s; limitar();
+  }
+  const punteros = new Map();
+  let pellizco = null, movido = 0;
+  lienzo.addEventListener("pointerdown", (ev) => {
+    lienzo.setPointerCapture(ev.pointerId); punteros.set(ev.pointerId, [ev.offsetX, ev.offsetY]); movido = 0;
+    lienzo.classList.add("arrastre");
+  });
+  lienzo.addEventListener("pointermove", (ev) => {
+    if (!punteros.has(ev.pointerId) || !plano) return;
+    const prev = punteros.get(ev.pointerId); punteros.set(ev.pointerId, [ev.offsetX, ev.offsetY]);
+    if (punteros.size === 2) {
+      const [a, b] = [...punteros.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pellizco) zoomEn(d / pellizco, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+      pellizco = d; movido += 10;
+    } else if (punteros.size === 1) {
+      cam.x += ev.offsetX - prev[0]; cam.y += ev.offsetY - prev[1]; limitar();
+      movido += Math.abs(ev.offsetX - prev[0]) + Math.abs(ev.offsetY - prev[1]);
+    }
+  });
+  const soltar = (ev) => {
+    if (punteros.size === 1 && movido < 6 && plano) tocar(ev.offsetX, ev.offsetY);
+    punteros.delete(ev.pointerId); if (punteros.size < 2) pellizco = null;
+    if (!punteros.size) lienzo.classList.remove("arrastre");
+  };
+  lienzo.addEventListener("pointerup", soltar);
+  lienzo.addEventListener("pointercancel", (ev) => { punteros.delete(ev.pointerId); pellizco = null; });
+  lienzo.addEventListener("wheel", (ev) => { ev.preventDefault(); if (plano) zoomEn(ev.deltaY < 0 ? 1.15 : 1 / 1.15, ev.offsetX, ev.offsetY); }, { passive: false });
+  document.getElementById("mas").onclick = () => plano && zoomEn(1.3, escena.clientWidth / 2, escena.clientHeight / 2);
+  document.getElementById("menos").onclick = () => plano && zoomEn(1 / 1.3, escena.clientWidth / 2, escena.clientHeight / 2);
+  document.getElementById("ver").onclick = () => plano && verOficina();
+
+  function tocar(sx, sy) {
+    const mx = (sx - cam.x) / cam.s, my = (sy - cam.y) / cam.s;
+    let mejor = null, dist = 14;
+    for (const g of gente.values()) {
+      const d = Math.hypot(g.x - mx, g.y - 10 - my);
+      if (d < dist) { dist = d; mejor = g; }
+    }
+    seleccionar(mejor ? mejor.p.id : null, false);
+  }
+  function seleccionar(id, mover) {
+    seleccion = id; pintarPanel();
+    if (id && mover) centrarEn(gente.get(id));
+    if (id) { const el = panel.querySelector(`[data-id="${id}"]`); if (el) el.scrollIntoView({ block: "nearest" }); }
+  }
+
+  // ── Panel del equipo ──
+  function pintarPanel() {
+    const zonas = ["Gerencia", "Contenido", "Operación"];
+    panel.textContent = "";
+    for (const z of zonas) {
+      const h = document.createElement("p"); h.className = "zona"; h.textContent = z; panel.append(h);
+      const grupo = document.createElement("div"); grupo.className = "grupo";
+      for (const p of EQUIPO.filter((q) => q.zona === z)) {
+        const st = estados[p.id] || {};
+        const e = st.estado || "libre";
+        const b = document.createElement("button");
+        b.className = "persona" + (seleccion === p.id ? " sel" : ""); b.dataset.id = p.id; b.id = "p-" + p.id;
+        const n = document.createElement("span"); n.className = "nombre"; n.textContent = p.nombre;
+        const s = document.createElement("span"); s.className = "estado " + e; s.textContent = TEXTO_ESTADO[e] || "Disponible";
+        const t = document.createElement("span"); t.className = "tarea"; t.textContent = st.tarea || "Sin tarea asignada";
+        b.append(n, s, t);
+        b.onclick = () => seleccionar(p.id, true);
+        grupo.append(b);
+      }
+      panel.append(grupo);
+    }
+    const nota = document.createElement("p"); nota.className = "nota";
+    nota.textContent = "Toca a un empleado para ver qué hace. Arrastra para moverte y pellizca o usa + y − para el zoom.";
+    panel.append(nota);
+  }
+
+  function marcarVivo(ok, cuando) {
+    document.getElementById("punto").classList.toggle("on", ok);
+    document.getElementById("vivoTxt").textContent = ok
+      ? (cuando ? "En vivo · última actividad " + cuando : "En vivo")
+      : "Sin conexión con la oficina. Se muestra el último estado conocido.";
+  }
+
+  async function conectar() {
+    let espera = setTimeout(() => marcarVivo(false), 10000);
+    const db = await (window.claude?.use ? window.claude.use("db") : Promise.resolve(null)).catch(() => null);
+    if (!db) { clearTimeout(espera); marcarVivo(false); return; }
+    db.collection("empleados").onSnapshot((snap) => {
+      clearTimeout(espera);
+      let ultima = "";
+      for (const d of snap.docs) {
+        const v = d.data() || {};
+        estados[d.id] = { estado: String(v.estado || "libre"), tarea: String(v.tarea || "") };
+        if (typeof v.actualizado === "string" && v.actualizado > ultima) ultima = v.actualizado;
+      }
+      let cuando = "";
+      if (ultima) { const f = new Date(ultima); if (!isNaN(f)) cuando = f.toLocaleString("es-CO", { weekday: "short", hour: "2-digit", minute: "2-digit" }); }
+      marcarVivo(true, cuando); pintarPanel();
+    }, () => { clearTimeout(espera); marcarVivo(false); });
+  }
+
+  async function iniciar() {
+    pintarPanel();
+    requestAnimationFrame(dibujar);
+    const [p, img] = await Promise.all([
+      fetch("plano.json").then((r) => r.json()),
+      new Promise((ok, mal) => { const i = new Image(); i.onload = () => ok(i); i.onerror = mal; i.src = "fondo.png"; }),
+    ]);
+    plano = p; fondo = img;
+    crearPersonas(); verOficina();
+    new ResizeObserver(() => limitar()).observe(escena);
+    conectar();
+  }
+  iniciar().catch(() => marcarVivo(false));
+})();
+</script>

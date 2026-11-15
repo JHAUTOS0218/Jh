@@ -87,6 +87,15 @@ Los empleados se llaman por lo que hacen. El archivo de cada uno está en `.clau
 | Operación | Contador | `contador.md` | Ventas, gastos, utilidad y cierre de mes |
 | Operación | Estratega de pauta | `estratega-pauta.md` | Meta Ads con las 3 Q's y semáforo |
 
+## Oficina en vivo
+
+Página: https://claude.ai/artifact/F9ec7Gu4am1pzWU2BgEhrM (concesionario en pixel art).
+Cada empleado tiene un documento en la colección `empleados` de esa página (id = nombre del archivo del agente, por ejemplo `tasador`), con `estado` ("trabajando", "esperando" o "libre"), `tarea` (una frase corta) y `actualizado` (fecha ISO con zona -05:00).
+Quien coordina un comando (la sesión principal, no los subagentes) actualiza ese documento con la herramienta ArtifactData:
+- Antes de lanzar a un empleado: `estado: "trabajando"` y la tarea que va a hacer.
+- Al terminar: `estado: "libre"` y el resultado en una frase. Si quedó algo que solo Julián puede decidir: `estado: "esperando"` y qué necesita.
+Si la página no responde, el trabajo sigue igual: la oficina es solo para mirar.
+
 ## Comandos rápidos (`.claude/commands/`)
 
 | Comando | Qué hace |
