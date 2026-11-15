@@ -207,7 +207,14 @@ def main():
             ok = t not in (WALL, VOID) and (c, r) not in bloqueado
             fila += "1" if ok else "0"
         caminable.append(fila)
+    codigos = {WALL: "W", VOID: "V", 1: "A", 8: "S"}
+    suelo = ["".join(codigos.get(tile(c, r), "O") for c in range(COLS)) for r in range(ROWS)]
+    muebles = []
+    for m in LAYOUT["furniture"]:
+        im, pared = sprite(m["type"])
+        muebles.append({"t": m["type"], "c": m["col"], "r": m["row"], "w": im.width // T, "h": max(1, im.height // T)})
     plano = {"cols": COLS, "rows": ROWS, "tile": T, "caminable": caminable, "puestos": puestos,
+             "suelo": suelo, "muebles": muebles,
              "zonaOficina": [16, 2, 46, 18], "puerta": [28, 19]}
     json.dump(plano, open(os.path.join(AQUI, "plano.json"), "w"))
     print("Listo: fondo.png", fondo.size, "y plano.json con", len(puestos), "puestos")

@@ -28,13 +28,22 @@ header {
 }
 h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
 .vivo { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--plata); font-variant-numeric: tabular-nums; }
+.vistas { display: flex; border: 1px solid var(--linea); border-radius: 6px; overflow: hidden; }
+.vistas button { background: transparent; color: var(--plata); border: 0; padding: 7px 14px; font: 600 12px var(--texto); letter-spacing: .06em; cursor: pointer; }
+.vistas button[aria-pressed="true"] { background: var(--blanco); color: var(--negro); }
+.vistas button:focus-visible { outline: 2px solid var(--plata); outline-offset: -2px; }
+.derecha { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cargando { position: absolute; inset: 0; display: grid; place-items: center; color: var(--plata); font-size: 13px; pointer-events: none; }
+.escena canvas + .cargando { display: none; }
 .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--gris); }
 .punto.on { background: var(--blanco); box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
-main { min-height: 0; display: grid; grid-template-columns: 1fr 300px; }
+main { min-height: 0; display: grid; grid-template-columns: 1fr 300px; grid-template-areas: "escena panel"; position: relative; }
+main > .escena { grid-area: escena; }
+main > aside { grid-area: panel; }
 .escena { position: relative; min-width: 0; min-height: 0; background: #0a0a0b; touch-action: none; }
 canvas { display: block; width: 100%; height: 100%; cursor: grab; image-rendering: pixelated; }
 canvas.arrastre { cursor: grabbing; }
-.zoom { position: absolute; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
+.zoom { position: absolute; right: 312px; top: 12px; display: flex; flex-direction: column; gap: 6px; }
 .zoom button {
   width: 40px; height: 40px; border: 1px solid var(--linea); background: var(--grafito); color: var(--blanco);
   font: 600 18px var(--texto); border-radius: 6px; cursor: pointer;
@@ -57,7 +66,8 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
 .tarea { grid-column: 1 / -1; font-size: 12px; color: var(--plata); line-height: 1.4; min-width: 0; overflow-wrap: anywhere; }
 .nota { font-size: 11px; color: var(--gris); line-height: 1.5; margin: 4px 0 0; }
 @media (max-width: 760px) {
-  main { grid-template-columns: 1fr; grid-template-rows: 58% 42%; }
+  main { grid-template-columns: 1fr; grid-template-rows: 58% 42%; grid-template-areas: "escena" "panel"; }
+  .zoom { right: max(12px, env(safe-area-inset-right, 0px)); }
   aside { border-left: 0; border-top: 1px solid var(--linea); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) { .punto.on { box-shadow: none; } }
@@ -66,16 +76,25 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
 <div class="app">
   <header>
     <h1>JH AUTOS · Oficina</h1>
-    <div class="vivo" aria-live="polite"><span class="punto" id="punto"></span><span id="vivoTxt">Conectando con la oficina…</span></div>
+    <div class="derecha">
+      <div class="vistas" role="group" aria-label="Vista">
+        <button id="b3d" aria-pressed="true">3D</button>
+        <button id="bpx" aria-pressed="false">PIXEL</button>
+      </div>
+      <div class="vivo" aria-live="polite"><span class="punto" id="punto"></span><span id="vivoTxt">Conectando con la oficina…</span></div>
+    </div>
   </header>
   <main>
-    <div class="escena" id="escena">
+    <div class="escena" id="escena3d">
+      <div class="cargando" id="cargando3d">Armando la oficina en 3D…</div>
+    </div>
+    <div class="escena" id="escena" hidden>
       <canvas id="lienzo" aria-label="Concesionario JH AUTOS en pixel art con los empleados trabajando"></canvas>
-      <div class="zoom">
-        <button id="mas" aria-label="Acercar">+</button>
-        <button id="menos" aria-label="Alejar">−</button>
-        <button id="ver" class="txt" aria-label="Ver toda la oficina">TODO</button>
-      </div>
+    </div>
+    <div class="zoom" id="zoom">
+      <button id="mas" aria-label="Acercar">+</button>
+      <button id="menos" aria-label="Alejar">−</button>
+      <button id="ver" class="txt" aria-label="Ver toda la oficina">TODO</button>
     </div>
     <aside id="panel"></aside>
   </main>
@@ -138,6 +157,8 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
   const escena = document.getElementById("escena");
   const panel = document.getElementById("panel");
   let plano = null, fondo = null, seleccion = null;
+  let vista = "3d";
+  try { if (localStorage.getItem("jh-vista") === "pixel") vista = "pixel"; } catch (e) { /* sin almacenamiento */ }
   const cam = { s: 2, x: 0, y: 0 };
   const gente = new Map();
   const estados = {};
@@ -218,6 +239,7 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
   function dibujar(ahora) {
     const dt = Math.min(0.05, (ahora - t0) / 1000); t0 = ahora; reloj += dt;
     if (plano) actualizar(dt);
+    if (vista !== "pixel") { requestAnimationFrame(dibujar); return; }
     const dpr = window.devicePixelRatio || 1;
     const w = escena.clientWidth, h = escena.clientHeight;
     if (lienzo.width !== Math.round(w * dpr) || lienzo.height !== Math.round(h * dpr)) {
@@ -335,9 +357,10 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
   lienzo.addEventListener("pointerup", soltar);
   lienzo.addEventListener("pointercancel", (ev) => { punteros.delete(ev.pointerId); pellizco = null; });
   lienzo.addEventListener("wheel", (ev) => { ev.preventDefault(); if (plano) zoomEn(ev.deltaY < 0 ? 1.15 : 1 / 1.15, ev.offsetX, ev.offsetY); }, { passive: false });
-  document.getElementById("mas").onclick = () => plano && zoomEn(1.3, escena.clientWidth / 2, escena.clientHeight / 2);
-  document.getElementById("menos").onclick = () => plano && zoomEn(1 / 1.3, escena.clientWidth / 2, escena.clientHeight / 2);
-  document.getElementById("ver").onclick = () => plano && verOficina();
+  const en3d = () => vista === "3d" && window.Vista3D;
+  document.getElementById("mas").onclick = () => en3d() ? Vista3D.acercar(1.3) : plano && zoomEn(1.3, escena.clientWidth / 2, escena.clientHeight / 2);
+  document.getElementById("menos").onclick = () => en3d() ? Vista3D.acercar(1 / 1.3) : plano && zoomEn(1 / 1.3, escena.clientWidth / 2, escena.clientHeight / 2);
+  document.getElementById("ver").onclick = () => en3d() ? Vista3D.todo() : plano && verOficina();
 
   function tocar(sx, sy) {
     const mx = (sx - cam.x) / cam.s, my = (sy - cam.y) / cam.s;
@@ -350,7 +373,7 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
   }
   function seleccionar(id, mover) {
     seleccion = id; pintarPanel();
-    if (id && mover) centrarEn(gente.get(id));
+    if (id && mover) { if (vista === "3d" && window.Vista3D) Vista3D.enfocar(id); else centrarEn(gente.get(id)); }
     if (id) { const el = panel.querySelector(`[data-id="${id}"]`); if (el) el.scrollIntoView({ block: "nearest" }); }
   }
 
@@ -405,6 +428,47 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
     }, () => { clearTimeout(espera); marcarVivo(false); });
   }
 
+  const escena3d = document.getElementById("escena3d");
+  function cargarScript(src) {
+    return new Promise((ok, mal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = mal; document.head.append(s); });
+  }
+  let cargando3d = null;
+  async function preparar3d() {
+    if (!cargando3d) cargando3d = (async () => {
+      await cargarScript("https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js");
+      await cargarScript("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js");
+      try { await document.fonts.load('40px "Michroma"'); await document.fonts.load('600 40px "Open Sans"'); } catch (e) { /* fuentes de respaldo */ }
+      await cargarScript("vista3d.js");
+    })();
+    return cargando3d;
+  }
+  async function cambiarVista(v) {
+    vista = v;
+    try { localStorage.setItem("jh-vista", v); } catch (e) { /* sin almacenamiento */ }
+    document.getElementById("b3d").setAttribute("aria-pressed", v === "3d");
+    document.getElementById("bpx").setAttribute("aria-pressed", v === "pixel");
+    escena.hidden = v !== "pixel"; escena3d.hidden = v !== "3d";
+    if (v === "3d") {
+      try {
+        await preparar3d();
+        if (vista === "3d" && plano) Vista3D.mostrar(escena3d);
+      } catch (e) {
+        document.getElementById("cargando3d").textContent = "No se pudo cargar la vista 3D en este dispositivo. Usa la vista Pixel.";
+      }
+    } else {
+      if (window.Vista3D) Vista3D.ocultar();
+      if (plano) requestAnimationFrame(() => verOficina());
+    }
+  }
+  document.getElementById("b3d").onclick = () => cambiarVista("3d");
+  document.getElementById("bpx").onclick = () => cambiarVista("pixel");
+  window.JH = {
+    gente, estados, EQUIPO,
+    get plano() { return plano; },
+    get seleccion() { return seleccion; },
+    seleccionar: (id, mover) => seleccionar(id, mover),
+  };
+
   async function iniciar() {
     pintarPanel();
     requestAnimationFrame(dibujar);
@@ -414,8 +478,9 @@ aside { border-left: 1px solid var(--linea); overflow-y: auto; min-height: 0; pa
     ]);
     plano = p; fondo = img;
     crearPersonas(); verOficina();
-    new ResizeObserver(() => limitar()).observe(escena);
+    new ResizeObserver(() => plano && !escena.hidden && limitar()).observe(escena);
     conectar();
+    cambiarVista(vista);
   }
   iniciar().catch(() => marcarVivo(false));
 })();
