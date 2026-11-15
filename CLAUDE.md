@@ -22,7 +22,7 @@ El manual completo está en `manual-jh-autos.html` (y `manual-jh-autos.pdf`). To
 - Colores: negro #000000, blanco #FFFFFF, plata #B4B7BB (solo datos y líneas finas, nunca fondo grande).
   Apoyo: grafito #1A1A1A (cajas y fondos secundarios) y gris #8A8A8A (notas).
 - Títulos: Monument, siempre en mayúscula, máximo 6 palabras.
-- Textos: el manual dice Open Sans (Regular, SemiBold, Bold). PENDIENTE: Julián debe confirmar si es Open Sans o Inter.
+- Textos, datos y nombres de carros: Open Sans (Regular, SemiBold, Bold), como dice el manual. Si en otro lugar aparece Inter, manda el manual.
 - Logos: `logos/jh-autos-logo-blanco-transparente.png` (por defecto, sobre fondo oscuro) y `logos/jh-autos-logo-negro-transparente.png` (solo sobre fondo claro).
 - Portada de feed: 1080 × 1350, foto a todo el lienzo, sombra negra abajo, modelo y carro abajo a la izquierda con margen de 84 px.
 - Video vertical: 1080 × 1920, texto siempre sobre franja negra, 220 px inferiores libres.
@@ -69,17 +69,19 @@ Notas de uso:
 
 ## Mapa de agentes
 
-| # | Empleado | Rol | Zona |
-|---|---|---|---|
-| 1 | Andrés | Gerente general | Gerencia |
-| 2 | Valentina | Espía de competencia y tendencias | Contenido |
-| 3 | Mateo | Creativo | Contenido |
-| 4 | Camila | Guionista | Contenido |
-| 5 | Sebastián | Diseñador | Contenido |
-| 6 | Daniela | Estratega de Instagram | Contenido |
-| 7 | Carlos | Jefe de inventario | Operación |
-| 8 | Ricardo | Tasador (asesor de compra) | Operación |
-| 9 | Patricia | Contadora | Operación |
-| 10 | Santiago | Estratega de pauta (Meta Ads) | Operación |
+Los empleados se llaman por lo que hacen. El archivo de cada uno está en `.claude/agents/`.
 
-Los archivos de cada empleado van en `.claude/agents/` (fase 2) y los comandos rápidos en `.claude/commands/` (fase 3).
+| Zona | Empleado | Archivo | Qué hace |
+|---|---|---|---|
+| Gerencia | Gerente | `gerente.md` | Coordina, arma la reunión del lunes y presenta decisiones pendientes |
+| Contenido | Espía | `espia.md` | Vigila cuentas y tendencias, llena el Radar |
+| Contenido | Creativo | `creativo.md` | Convierte el Radar en 8 a 10 ideas por semana |
+| Contenido | Guionista | `guionista.md` | Escribe guiones de las ideas aprobadas |
+| Contenido | Diseñador | `disenador.md` | Historias diarias y piezas en Canva |
+| Contenido | Estratega de Instagram | `estratega-instagram.md` | Horarios, formatos, crecimiento y plan del mes |
+| Operación | Jefe de inventario | `jefe-inventario.md` | Inventario al día, carros quietos y alertas |
+| Operación | Tasador | `tasador.md` | Precio de compra y decisión ante cada carro ofrecido |
+| Operación | Contador | `contador.md` | Ventas, gastos, utilidad y cierre de mes |
+| Operación | Estratega de pauta | `estratega-pauta.md` | Meta Ads con las 3 Q's y semáforo |
+
+Los comandos rápidos van en `.claude/commands/` (fase 3).
