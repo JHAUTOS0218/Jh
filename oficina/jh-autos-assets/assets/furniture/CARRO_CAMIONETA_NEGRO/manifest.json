@@ -1,0 +1,44 @@
+{
+  "id": "CARRO_CAMIONETA_NEGRO",
+  "name": "Camioneta negro",
+  "category": "decor",
+  "type": "group",
+  "groupType": "rotation",
+  "rotationScheme": "3-way-mirror",
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0,
+  "members": [
+    {
+      "type": "asset",
+      "id": "CARRO_CAMIONETA_NEGRO_FRONT",
+      "file": "CARRO_CAMIONETA_NEGRO_FRONT.png",
+      "width": 32,
+      "height": 48,
+      "footprintW": 2,
+      "footprintH": 3,
+      "orientation": "front"
+    },
+    {
+      "type": "asset",
+      "id": "CARRO_CAMIONETA_NEGRO_BACK",
+      "file": "CARRO_CAMIONETA_NEGRO_BACK.png",
+      "width": 32,
+      "height": 48,
+      "footprintW": 2,
+      "footprintH": 3,
+      "orientation": "back"
+    },
+    {
+      "type": "asset",
+      "id": "CARRO_CAMIONETA_NEGRO_SIDE",
+      "file": "CARRO_CAMIONETA_NEGRO_SIDE.png",
+      "width": 48,
+      "height": 32,
+      "footprintW": 3,
+      "footprintH": 2,
+      "orientation": "side",
+      "mirrorSide": true
+    }
+  ]
+}

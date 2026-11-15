@@ -1,0 +1,14 @@
+{
+  "id": "LETRERO_JH_AUTOS",
+  "name": "Letrero JH AUTOS",
+  "category": "decor",
+  "type": "asset",
+  "file": "LETRERO_JH_AUTOS.png",
+  "width": 96,
+  "height": 48,
+  "footprintW": 6,
+  "footprintH": 3,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}

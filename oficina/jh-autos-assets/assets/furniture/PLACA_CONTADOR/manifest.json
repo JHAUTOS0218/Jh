@@ -1,0 +1,14 @@
+{
+  "id": "PLACA_CONTADOR",
+  "name": "Placa Contador",
+  "category": "decor",
+  "type": "asset",
+  "file": "PLACA_CONTADOR.png",
+  "width": 48,
+  "height": 16,
+  "footprintW": 3,
+  "footprintH": 1,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": true,
+  "backgroundTiles": 0
+}

@@ -1,0 +1,14 @@
+{
+  "id": "ESCRITORIO_JH",
+  "name": "Escritorio JH",
+  "category": "desks",
+  "type": "asset",
+  "file": "ESCRITORIO_JH.png",
+  "width": 64,
+  "height": 32,
+  "footprintW": 4,
+  "footprintH": 2,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 1
+}

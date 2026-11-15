@@ -1,0 +1,14 @@
+{
+  "id": "VITRINA_FUNDA",
+  "name": "Vitrina con funda y moño",
+  "category": "decor",
+  "type": "asset",
+  "file": "VITRINA_FUNDA.png",
+  "width": 64,
+  "height": 64,
+  "footprintW": 4,
+  "footprintH": 4,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}

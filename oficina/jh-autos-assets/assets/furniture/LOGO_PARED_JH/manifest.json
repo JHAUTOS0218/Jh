@@ -1,0 +1,14 @@
+{
+  "id": "LOGO_PARED_JH",
+  "name": "Logo JH AUTOS de pared",
+  "category": "wall",
+  "type": "asset",
+  "file": "LOGO_PARED_JH.png",
+  "width": 64,
+  "height": 32,
+  "footprintW": 4,
+  "footprintH": 2,
+  "canPlaceOnWalls": true,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}

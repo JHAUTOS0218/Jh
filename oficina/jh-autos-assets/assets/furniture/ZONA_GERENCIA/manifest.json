@@ -1,0 +1,14 @@
+{
+  "id": "ZONA_GERENCIA",
+  "name": "Zona Gerencia",
+  "category": "wall",
+  "type": "asset",
+  "file": "ZONA_GERENCIA.png",
+  "width": 48,
+  "height": 32,
+  "footprintW": 3,
+  "footprintH": 2,
+  "canPlaceOnWalls": true,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}
