@@ -6,9 +6,9 @@
 <title>Manual de marca JH AUTOS</title>
 <style>
 @font-face{font-family:"Monument";src:url(%%FUENTE_TITULOS%%) format("%%FUENTE_TITULOS_FMT%%");font-weight:400;font-display:block}
-@font-face{font-family:"Inter";src:url(%%INTER_400%%) format("woff2");font-weight:400;font-display:block}
-@font-face{font-family:"Inter";src:url(%%INTER_500%%) format("woff2");font-weight:500;font-display:block}
-@font-face{font-family:"Inter";src:url(%%INTER_600%%) format("woff2");font-weight:600;font-display:block}
+@font-face{font-family:"Open Sans";src:url(%%OS_400%%) format("woff2");font-weight:400;font-display:block}
+@font-face{font-family:"Open Sans";src:url(%%OS_600%%) format("woff2");font-weight:600;font-display:block}
+@font-face{font-family:"Open Sans";src:url(%%OS_700%%) format("woff2");font-weight:700;font-display:block}
 
 :root{
   --negro:#000000; --blanco:#FFFFFF; --plata:#B4B7BB;
@@ -17,7 +17,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--negro)}
-body{font-family:"Inter",sans-serif;color:var(--blanco);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+body{font-family:"Open Sans",sans-serif;color:var(--blanco);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
 img{display:block}
 
 /* ---------- Página: lienzo 1600 x 900, escalable ---------- */
@@ -32,7 +32,7 @@ img{display:block}
 .clara{background:var(--blanco);color:var(--negro);--nota:var(--grafito);--dato:var(--negro);--linea:var(--gris)}
 
 .hd{display:flex;align-items:baseline;gap:calc(28*var(--u));margin-bottom:calc(48*var(--u))}
-.num{font-size:calc(16*var(--u));font-weight:500;letter-spacing:.12em;color:var(--dato)}
+.num{font-size:calc(16*var(--u));font-weight:600;letter-spacing:.12em;color:var(--dato)}
 h1,h2,h3,.mono{font-family:"Monument",sans-serif;font-weight:400;text-transform:uppercase}
 h2{font-size:calc(40*var(--u));letter-spacing:.2em;line-height:1}
 h3{font-size:calc(17*var(--u));letter-spacing:.24em;line-height:1.2}
@@ -53,13 +53,13 @@ p{font-size:calc(20*var(--u));line-height:1.5}
 .dividida{padding:0;flex-direction:row}
 .mitad{flex:1;padding:calc(80*var(--u)) calc(96*var(--u));display:flex;flex-direction:column}
 .mitad .lienzo{flex:1;display:flex;align-items:center;justify-content:center}
-.mitad .lienzo img{width:calc(440*var(--u))}
+.mitad .lienzo img{width:calc(560*var(--u))}
 .mitad .uso{min-height:calc(160*var(--u));display:flex;flex-direction:column;gap:calc(14*var(--u));max-width:calc(560*var(--u));padding-bottom:calc(40*var(--u))}
 .mitad .hd-vacio{height:calc(40*var(--u));margin-bottom:calc(48*var(--u))}
 
 /* ---------- 3 Zona de respeto ---------- */
 .cols{flex:1;display:flex;gap:calc(64*var(--u));align-items:center}
-.texto{width:calc(420*var(--u));flex:none;display:flex;flex-direction:column;gap:calc(24*var(--u))}
+.texto{width:calc(360*var(--u));flex:none;display:flex;flex-direction:column;gap:calc(24*var(--u))}
 .diagrama-wrap{flex:1;display:flex;justify-content:center;align-items:center}
 .zona{position:relative;width:calc((%%ZW%% + 2*%%ZX%%)*var(--u));height:calc((%%ZH%% + 2*%%ZX%%)*var(--u));border:1px dashed var(--negro)}
 .zona .logo{position:absolute;left:calc(%%ZX%%*var(--u));top:calc(%%ZX%%*var(--u));width:calc(%%ZW%%*var(--u))}
@@ -103,14 +103,15 @@ p{font-size:calc(20*var(--u));line-height:1.5}
 .sombra{filter:drop-shadow(calc(9*var(--u)) calc(9*var(--u)) 0 var(--gris))}
 .contorno{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)}
 .rotado{transform:rotate(-14deg)}
-.foto-detalle,.malo .t.foto-detalle{background:url(%%FOTO_DETALLE%%) center/cover}
+.foto-detalle,.malo .t.foto-detalle{background:url(%%FOTO_MAZDA%%) center 12%/cover}
+.foto-franja{background:url(%%FOTO_MAZDA%%) center 38%/cover}
 
 /* ---------- 6 Logo sobre fotografía ---------- */
 .fotos{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:calc(48*var(--u))}
 .foto-ej{display:flex;flex-direction:column;gap:calc(16*var(--u))}
 .foto{position:relative;flex:1;overflow:hidden}
-.foto.oscura-zona{background:url(%%FOTO_ZONA_OSCURA%%) center/cover}
-.foto.oscura-zona .logo{position:absolute;left:50%;top:21%;transform:translate(-50%,-50%);width:calc(230*var(--u))}
+.foto.oscura-zona{background:url(%%FOTO_AUDI%%) center bottom/cover}
+.foto.oscura-zona .logo{position:absolute;left:50%;top:87%;transform:translate(-50%,-50%);width:calc(230*var(--u))}
 .foto .franja{position:absolute;left:0;right:0;bottom:0;height:30%;background:var(--negro);display:flex;align-items:center;justify-content:center}
 .foto .franja .logo{width:calc(230*var(--u))}
 .foto-ej .cap{display:flex;gap:calc(14*var(--u));align-items:baseline}
@@ -155,7 +156,9 @@ p{font-size:calc(20*var(--u));line-height:1.5}
 .m-reel{aspect-ratio:1080/1920}
 .ph{position:absolute;background:var(--gris);display:flex;align-items:center;justify-content:center;color:var(--negro);font-size:calc(30*var(--k));font-weight:600;letter-spacing:.2em}
 .mock .lg{position:absolute}
-.mock .modelo{position:absolute;font-size:calc(38*var(--k));font-weight:600;letter-spacing:.24em;color:var(--plata)}
+.mock .modelo{position:absolute;font-size:calc(44*var(--k));font-weight:400;letter-spacing:.02em;color:var(--plata)}
+.mock .auto{position:absolute;font-size:calc(60*var(--k));font-weight:700;line-height:1.15;text-transform:uppercase}
+.mock .fotobg{position:absolute;background-size:cover;background-position:center}
 .mock .titulo{position:absolute;font-family:"Monument";text-transform:uppercase;line-height:1.28;letter-spacing:.06em}
 
 /* ---------- Pantallas angostas ---------- */
@@ -319,7 +322,7 @@ p{font-size:calc(20*var(--u));line-height:1.5}
         <div class="cap"><h3>Correcto</h3><span class="nota">Sobre una zona oscura y limpia de la foto.</span></div>
       </div>
       <div class="foto-ej">
-        <div class="foto foto-detalle"><div class="franja"><img class="logo" src="%%LOGO_BLANCO%%" alt="Logo sobre franja negra"></div></div>
+        <div class="foto foto-franja"><div class="franja"><img class="logo" src="%%LOGO_BLANCO%%" alt="Logo sobre franja negra"></div></div>
         <div class="cap"><h3>Correcto</h3><span class="nota">Sobre una franja negra a todo el ancho.</span></div>
       </div>
     </div>
@@ -367,17 +370,18 @@ p{font-size:calc(20*var(--u));line-height:1.5}
         <p class="nota">Logo y títulos. Siempre en mayúscula, máximo 6 palabras.</p>
       </div>
       <div class="tipo">
-        <h3>Inter</h3>
+        <h3>Open Sans</h3>
         <div class="muestra-grande">Aa</div>
         <div class="alfabeto">ABCDEFGHIJKLMNÑOPQRSTUVWXYZ<br>abcdefghijklmnñopqrstuvwxyz 0123456789</div>
-        <p class="nota">Textos, datos y notas. Regular, Medium y SemiBold.</p>
+        <p class="nota">Textos, datos y nombres de carros en publicaciones. Regular, SemiBold y Bold.</p>
       </div>
     </div>
     <div class="escala">
       <div class="fila"><span class="dato">Título · Monument 48</span><span class="mono" style="font-size:calc(48*var(--u));letter-spacing:.14em">Recibimos tu carro</span></div>
-      <div class="fila"><span class="dato">Subtítulo · Monument 24</span><span class="mono" style="font-size:calc(24*var(--u));letter-spacing:.18em">Modelo 2020</span></div>
-      <div class="fila"><span class="dato">Texto · Inter 20</span><span style="font-size:calc(20*var(--u))">Compra, venta y consignación de vehículos en Cartagena.</span></div>
-      <div class="fila"><span class="dato">Nota · Inter 16</span><span class="nota">Precio sujeto a revisión técnica. %%NOTA_FUENTE%%</span></div>
+      <div class="fila"><span class="dato">Carro · Open Sans Bold 32</span><span style="font-size:calc(32*var(--u));font-weight:700;text-transform:uppercase">Nissan X-Trail Exclusive</span></div>
+      <div class="fila"><span class="dato">Modelo · Open Sans 24</span><span style="font-size:calc(24*var(--u));color:var(--plata)">MODELO 2019</span></div>
+      <div class="fila"><span class="dato">Texto · Open Sans 20</span><span style="font-size:calc(20*var(--u))">Compra, venta y consignación de vehículos en Cartagena.</span></div>
+      <div class="fila"><span class="dato">Nota · Open Sans 16</span><span class="nota">Precio sujeto a revisión técnica. %%NOTA_FUENTE%%</span></div>
     </div>
     <div class="ft"><span>Manual de marca</span><span>07 / 08</span></div>
   </div>
@@ -391,26 +395,26 @@ p{font-size:calc(20*var(--u));line-height:1.5}
       <div class="app">
         <div class="mock m-story"><div class="in">
           <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(420*var(--k));left:calc(330*var(--k));top:calc(170*var(--k))">
-          <div class="ph" style="left:0;right:0;top:calc(480*var(--k));height:calc(900*var(--k))">FOTO</div>
-          <div class="modelo" style="left:calc(96*var(--k));top:calc(1500*var(--k))">MODELO 2020</div>
-          <div class="titulo" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1580*var(--k));font-size:calc(62*var(--k))">Chevrolet Captiva Premier</div>
+          <div class="fotobg" style="left:0;right:0;top:calc(440*var(--k));height:calc(1000*var(--k));background-image:url(%%FOTO_XTRAIL%%);background-position:center 70%"></div>
+          <div class="modelo" style="left:calc(96*var(--k));top:calc(1530*var(--k))">MODELO 2019</div>
+          <div class="auto" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1600*var(--k))">Nissan X-Trail Exclusive</div>
         </div></div>
         <h3>Historia</h3><span class="dato">1080 × 1920 px</span>
       </div>
       <div class="app">
         <div class="mock m-feed"><div class="in">
-          <div class="ph" style="left:0;right:0;top:0;height:calc(860*var(--k))">FOTO</div>
-          <div class="modelo" style="left:calc(80*var(--k));top:calc(940*var(--k))">MODELO 2017</div>
-          <div class="titulo" style="left:calc(80*var(--k));right:calc(80*var(--k));top:calc(1010*var(--k));font-size:calc(56*var(--k))">Audi A4 TFSI Ambition</div>
+          <div class="fotobg" style="left:0;right:0;top:0;height:calc(900*var(--k));background-image:url(%%FOTO_AUDI%%);background-position:center 62%"></div>
+          <div class="modelo" style="left:calc(80*var(--k));top:calc(960*var(--k))">MODELO 2017</div>
+          <div class="auto" style="left:calc(80*var(--k));right:calc(80*var(--k));top:calc(1022*var(--k))">Audi A4 TFSI Ambition</div>
           <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(260*var(--k));left:calc(80*var(--k));bottom:calc(72*var(--k))">
         </div></div>
         <h3>Post de feed</h3><span class="dato">1080 × 1350 px</span>
       </div>
       <div class="app">
         <div class="mock m-reel"><div class="in">
-          <div class="ph" style="left:0;right:0;top:0;bottom:0">FOTO</div>
-          <div style="position:absolute;left:0;right:0;bottom:0;height:calc(640*var(--k));background:var(--negro)"></div>
-          <div class="titulo" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1380*var(--k));font-size:calc(80*var(--k))">Recibimos tu carro</div>
+          <div class="fotobg" style="left:0;right:0;top:0;bottom:calc(560*var(--k));background-image:url(%%FOTO_VERSA%%);background-position:center 55%"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:calc(560*var(--k));background:var(--negro)"></div>
+          <div class="titulo" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1440*var(--k));font-size:calc(62*var(--k))">Recibimos tu carro</div>
           <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(300*var(--k));left:calc(96*var(--k));bottom:calc(120*var(--k))">
         </div></div>
         <h3>Portada de reel</h3><span class="dato">1080 × 1920 px</span>

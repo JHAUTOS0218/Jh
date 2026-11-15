@@ -7,13 +7,14 @@ Uso:
 Lee desde la raíz del repositorio:
     logo-blanco-sobre-negro.png   (versión principal)
     logo-negro-sobre-blanco.png   (versión secundaria)
-    *monument*.otf|ttf|woff|woff2 (opcional; si no existe se usa Michroma)
+    *monument*.otf|ttf|woff|woff2 en cualquier subcarpeta, p. ej. privado/
+                                  (opcional; si no existe se usa Michroma)
+    fuente/fotos/*.jpg            fotos de ejemplo
 """
 import base64
 import glob
 import io
 import os
-import random
 import re
 import sys
 
@@ -56,13 +57,18 @@ def a_transparente(img, tinta):
     El alfa sale de la luminancia, así los bordes suavizados se conservan.
     """
     rgba = img.convert("RGBA")
+    # Si el archivo es pequeño, se amplía antes de extraer el alfa para que
+    # los bordes queden suaves en tamaños grandes y en el PDF.
+    if rgba.size[0] < 3000:
+        f = 3000 / rgba.size[0]
+        rgba = rgba.resize((round(rgba.size[0] * f), round(rgba.size[1] * f)), Image.LANCZOS)
     if not fondo_solido(rgba):
         alfa = rgba.getchannel("A")
     else:
         lum = rgba.convert("L")
         alfa = lum if tinta == "blanco" else ImageOps.invert(lum)
         # limpia ruido de compresión en el fondo y satura el trazo
-        alfa = alfa.point(lambda v: 0 if v < 10 else (255 if v > 245 else v))
+        alfa = alfa.point(lambda v: 0 if v < 40 else (255 if v > 215 else round((v - 40) * 255 / 175)))
     color = (255, 255, 255) if tinta == "blanco" else (0, 0, 0)
     out = Image.new("RGBA", rgba.size, color + (0,))
     out.putalpha(alfa)
@@ -85,32 +91,6 @@ def medir_j(logo):
     return {"l": x0 / w, "t": y0 / h, "w": (x1 - x0) / w, "h": (y1 - y0) / h}
 
 
-def foto_simulada(seed, w=640, h=400, n=2600, oscuro_hasta=0.0):
-    """Mosaico con mucho detalle hecho solo con los colores de la marca."""
-    rnd = random.Random(seed)
-    colores = ["#000000", "#FFFFFF", "#B4B7BB", "#8A8A8A", "#1A1A1A"]
-    rects = []
-    for _ in range(n):
-        rw, rh = rnd.randint(3, 22), rnd.randint(2, 14)
-        x = rnd.randint(-10, w)
-        y0 = int(h * oscuro_hasta)
-        y = rnd.randint(y0 - 10, h)
-        if y < y0:
-            rh -= y0 - y
-            y = y0
-            if rh <= 0:
-                continue
-        rects.append(f'<rect x="{x}" y="{y}" width="{rw}" height="{rh}" fill="{rnd.choice(colores)}"/>')
-    svg = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" preserveAspectRatio="xMidYMid slice">'
-        f'<rect width="{w}" height="{h}" fill="#8A8A8A"/>'
-        + (f'<rect width="{w}" height="{int(h*oscuro_hasta)}" fill="#1A1A1A"/>' if oscuro_hasta else "")
-        + "".join(rects)
-        + "</svg>"
-    )
-    return b64(svg.encode(), "image/svg+xml")
-
-
 def fuente_titulos():
     candidatos = []
     for ext in ("otf", "ttf", "woff", "woff2"):
@@ -126,9 +106,14 @@ def fuente_titulos():
         return b64(f.read(), "font/woff2"), "woff2", False
 
 
-def fuente_inter(peso):
-    with open(os.path.join(AQUI, "fuentes", f"inter-latin-{peso}-normal.woff2"), "rb") as f:
+def fuente_texto(peso):
+    with open(os.path.join(AQUI, "fuentes", f"opensans-{peso}.woff2"), "rb") as f:
         return b64(f.read(), "font/woff2")
+
+
+def foto(nombre):
+    with open(os.path.join(AQUI, "fotos", f"{nombre}.jpg"), "rb") as f:
+        return b64(f.read(), "image/jpeg")
 
 
 def main():
@@ -150,7 +135,7 @@ def main():
 
     # Diagrama de zona de respeto: x = altura de la J
     xr = j["h"]  # x en fracciones de la altura del logo
-    W = min(860 / (1 + 2 * xr * ar), 560 / (ar * (1 + 2 * xr)))
+    W = min(960 / (1 + 2 * xr * ar), 560 / (ar * (1 + 2 * xr)))
     H = W * ar
     X = xr * H
 
@@ -172,13 +157,15 @@ def main():
         "JT": f"{j['t']:.5f}",
         "JW": f"{j['w']:.5f}",
         "JH": f"{j['h']:.5f}",
-        "FOTO_DETALLE": foto_simulada(7),
-        "FOTO_ZONA_OSCURA": foto_simulada(11, oscuro_hasta=0.42),
+        "FOTO_MAZDA": foto("mazda"),
+        "FOTO_AUDI": foto("audi"),
+        "FOTO_VERSA": foto("versa"),
+        "FOTO_XTRAIL": foto("xtrail"),
         "FUENTE_TITULOS": titulo_src,
         "FUENTE_TITULOS_FMT": titulo_fmt,
-        "INTER_400": fuente_inter(400),
-        "INTER_500": fuente_inter(500),
-        "INTER_600": fuente_inter(600),
+        "OS_400": fuente_texto("Regular"),
+        "OS_600": fuente_texto("Semibold"),
+        "OS_700": fuente_texto("Bold"),
         "NOTA_FUENTE": nota_fuente,
     }
 
