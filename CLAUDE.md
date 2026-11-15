@@ -53,6 +53,8 @@ Página principal: https://app.notion.com/p/419187d0ebb981c79169cbd0e1a95b51
 | Gastos | Gastos por categoría | `collection://419187d0-ebb9-816d-9c9f-000b4ca9379d` |
 | Campañas | Meta Ads y decisiones semanales | `collection://419187d0-ebb9-811a-bfeb-000b0f25f28c` |
 | Reuniones | Bitácora semanal del gerente | `collection://419187d0-ebb9-816c-af22-000b89cde32a` |
+| Pendientes | Lista única de tareas (la lleva la secretaria) | `collection://419187d0-ebb9-813a-8700-000b120b4f78` |
+| Citas | Citas con clientes (las agenda la secretaria) | `collection://419187d0-ebb9-81f8-a792-000b374083d2` |
 
 Notas de uso:
 - Los valores en pesos se guardan como número entero en COP (Notion los muestra con "$").
@@ -74,6 +76,7 @@ Los empleados se llaman por lo que hacen. El archivo de cada uno está en `.clau
 | Zona | Empleado | Archivo | Qué hace |
 |---|---|---|---|
 | Gerencia | Gerente | `gerente.md` | Coordina, arma la reunión del lunes y presenta decisiones pendientes |
+| Gerencia | Secretaria | `secretaria.md` | Pendientes, citas con clientes y qué hacer primero |
 | Contenido | Espía | `espia.md` | Vigila cuentas y tendencias, llena el Radar |
 | Contenido | Creativo | `creativo.md` | Convierte el Radar en 8 a 10 ideas por semana |
 | Contenido | Guionista | `guionista.md` | Escribe guiones de las ideas aprobadas |
@@ -84,4 +87,17 @@ Los empleados se llaman por lo que hacen. El archivo de cada uno está en `.clau
 | Operación | Contador | `contador.md` | Ventas, gastos, utilidad y cierre de mes |
 | Operación | Estratega de pauta | `estratega-pauta.md` | Meta Ads con las 3 Q's y semáforo |
 
-Los comandos rápidos van en `.claude/commands/` (fase 3).
+## Comandos rápidos (`.claude/commands/`)
+
+| Comando | Qué hace |
+|---|---|
+| `/lunes` | Ronda semanal: gerente → espía → creativo → inventario → pauta → reunión → pendientes |
+| `/tasar` | El tasador analiza un carro o moto ofrecido |
+| `/venta` | Registra una venta; el contador calcula la utilidad y marca el carro como Vendido |
+| `/ingreso` | Registra un carro nuevo y el creativo propone contenido |
+| `/guiones` | El guionista escribe todas las ideas aprobadas |
+| `/mes` | Cierre del mes: contador, espía, estratega de Instagram y plan del mes |
+| `/pendientes` | Ver tu lista o anotar algo nuevo |
+| `/cita` | Agendar una cita con un cliente |
+
+Pendiente para después: agentes propios de JH Bikes (por ahora el tasador ya cubre motos).
