@@ -146,20 +146,31 @@ p{font-size:calc(20*var(--u));line-height:1.5}
 .escala .fila{display:grid;grid-template-columns:calc(220*var(--u)) 1fr;align-items:baseline;padding:calc(14*var(--u)) 0;border-top:1px solid var(--grafito)}
 .escala .fila:first-child{border-top-color:var(--plata)}
 
-/* ---------- 9 Aplicaciones ---------- */
-.apps{flex:1;display:flex;gap:calc(56*var(--u));align-items:flex-end;justify-content:center}
-.app{display:flex;flex-direction:column;gap:calc(14*var(--u))}
-.mock{--k:calc(100cqw / 1080);container-type:inline-size;position:relative;width:calc(318*var(--u));background:var(--negro);overflow:hidden;color:var(--blanco)}
+/* ---------- 9 Portadas ---------- */
+.portadas{flex:1;display:flex;gap:calc(40*var(--u));align-items:flex-start}
+.portadas figure{display:flex;flex-direction:column;gap:calc(12*var(--u))}
+.portadas img{height:calc(600*var(--u));aspect-ratio:1080/1350;object-fit:cover}
+.spec{flex:1;display:flex;flex-direction:column;gap:calc(18*var(--u));padding-left:calc(8*var(--u))}
+.spec .item{display:flex;flex-direction:column;gap:calc(4*var(--u));padding-top:calc(14*var(--u));border-top:1px solid var(--linea)}
+.spec .item:first-child{border-top:0;padding-top:0}
+.spec .k{font-family:"Monument";font-size:calc(13*var(--u));letter-spacing:.2em;text-transform:uppercase}
+.spec .v{font-size:calc(17*var(--u));line-height:1.45}
+
+/* ---------- 10 Movmax ---------- */
+.movmax{flex:1;display:flex;gap:calc(48*var(--u));align-items:flex-start}
+.movmax figure{display:flex;flex-direction:column;gap:calc(12*var(--u))}
+.movmax .tel{height:calc(600*var(--u));aspect-ratio:9/16}
+.movmax img.tel{object-fit:cover}
+.movmax .mock.tel{outline:1px solid var(--gris)}
+.mock{container-type:inline-size;position:relative;background:var(--negro);overflow:hidden;color:var(--blanco)}
 .mock .in{--k:calc(100cqw / 1080);position:absolute;inset:0}
-.m-story{aspect-ratio:1080/1920}
-.m-feed{aspect-ratio:1080/1350}
-.m-reel{aspect-ratio:1080/1920}
-.ph{position:absolute;background:var(--gris);display:flex;align-items:center;justify-content:center;color:var(--negro);font-size:calc(30*var(--k));font-weight:600;letter-spacing:.2em}
 .mock .lg{position:absolute}
-.mock .modelo{position:absolute;font-size:calc(44*var(--k));font-weight:400;letter-spacing:.02em;color:var(--plata)}
-.mock .auto{position:absolute;font-size:calc(60*var(--k));font-weight:700;line-height:1.15;text-transform:uppercase}
 .mock .fotobg{position:absolute;background-size:cover;background-position:center}
-.mock .titulo{position:absolute;font-family:"Monument";text-transform:uppercase;line-height:1.28;letter-spacing:.06em}
+.mock .disp{position:absolute;left:0;right:0;text-align:center;font-family:"Monument";text-transform:uppercase;letter-spacing:.3em;text-indent:.3em}
+.mock .modelo{position:absolute;font-weight:400;text-transform:uppercase;letter-spacing:.01em}
+.mock .auto{position:absolute;font-weight:700;line-height:1.15;text-transform:uppercase}
+.mock .segura{position:absolute;left:0;right:0;bottom:0;border-top:1px dashed var(--gris)}
+.estado{display:flex;gap:calc(12*var(--u));align-items:baseline}
 
 /* ---------- Pantallas angostas ---------- */
 @media screen and (max-width:760px){
@@ -184,8 +195,8 @@ p{font-size:calc(20*var(--u));line-height:1.5}
   .malos{grid-template-columns:1fr 1fr;grid-template-rows:none}
   .malo .t{min-height:140px}
   .foto{min-height:220px}
-  .apps{flex-wrap:wrap;align-items:flex-start}
-  .mock{width:calc(100vw - 32px)}
+  .portadas,.movmax{flex-direction:column}
+  .portadas img,.movmax .tel{height:auto;width:100%}
   .escala .fila{grid-template-columns:1fr}
   .dato,.barra div,.muestra dl{font-size:max(12px,calc(15*var(--u)))}
 }
@@ -254,7 +265,7 @@ p{font-size:calc(20*var(--u));line-height:1.5}
         </div>
       </div>
     </div>
-    <div class="ft"><span>Manual de marca</span><span>02 / 08</span></div>
+    <div class="ft"><span>Manual de marca</span><span>02 / 09</span></div>
   </div>
 </section>
 
@@ -286,7 +297,7 @@ p{font-size:calc(20*var(--u));line-height:1.5}
         </div>
       </div>
     </div>
-    <div class="ft"><span>Por debajo de estas medidas el logo pierde nitidez</span><span>03 / 08</span></div>
+    <div class="ft"><span>Por debajo de estas medidas el logo pierde nitidez</span><span>03 / 09</span></div>
   </div>
 </section>
 
@@ -308,7 +319,7 @@ p{font-size:calc(20*var(--u));line-height:1.5}
       <div class="malo"><div class="t foto-detalle"><img src="%%LOGO_BLANCO%%" alt=""><svg class="tache" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="#000" stroke-width="5" vector-effect="non-scaling-stroke"/><line x1="0" y1="100" x2="100" y2="0" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
         <div class="cap"><h3>Foto sin franja</h3><span class="nota">Usa una franja negra.</span></div></div>
     </div>
-    <div class="ft"><span>Manual de marca</span><span>04 / 08</span></div>
+    <div class="ft"><span>Manual de marca</span><span>04 / 09</span></div>
   </div>
 </section>
 
@@ -326,7 +337,7 @@ p{font-size:calc(20*var(--u));line-height:1.5}
         <div class="cap"><h3>Correcto</h3><span class="nota">Sobre una franja negra a todo el ancho.</span></div>
       </div>
     </div>
-    <div class="ft"><span>Si la foto no tiene una zona oscura y uniforme, agrega la franja</span><span>05 / 08</span></div>
+    <div class="ft"><span>Si la foto no tiene una zona oscura y uniforme, agrega la franja</span><span>05 / 09</span></div>
   </div>
 </section>
 
@@ -354,7 +365,7 @@ p{font-size:calc(20*var(--u));line-height:1.5}
         <div class="sw"><div class="chip" style="background:var(--gris)"></div><div><strong style="font-weight:600">Gris</strong> · #8A8A8A<br><span class="nota">Notas y textos de apoyo</span></div></div>
       </div>
     </div>
-    <div class="ft"><span>Manual de marca</span><span>06 / 08</span></div>
+    <div class="ft"><span>Manual de marca</span><span>06 / 09</span></div>
   </div>
 </section>
 
@@ -379,48 +390,62 @@ p{font-size:calc(20*var(--u));line-height:1.5}
     <div class="escala">
       <div class="fila"><span class="dato">Título · Monument 48</span><span class="mono" style="font-size:calc(48*var(--u));letter-spacing:.14em">Recibimos tu carro</span></div>
       <div class="fila"><span class="dato">Carro · Open Sans Bold 32</span><span style="font-size:calc(32*var(--u));font-weight:700;text-transform:uppercase">Nissan X-Trail Exclusive</span></div>
-      <div class="fila"><span class="dato">Modelo · Open Sans 24</span><span style="font-size:calc(24*var(--u));color:var(--plata)">MODELO 2019</span></div>
+      <div class="fila"><span class="dato">Modelo · Open Sans 24</span><span style="font-size:calc(24*var(--u))">MODELO 2019</span></div>
       <div class="fila"><span class="dato">Texto · Open Sans 20</span><span style="font-size:calc(20*var(--u))">Compra, venta y consignación de vehículos en Cartagena.</span></div>
       <div class="fila"><span class="dato">Nota · Open Sans 16</span><span class="nota">Precio sujeto a revisión técnica. %%NOTA_FUENTE%%</span></div>
     </div>
-    <div class="ft"><span>Manual de marca</span><span>07 / 08</span></div>
+    <div class="ft"><span>Manual de marca</span><span>07 / 09</span></div>
   </div>
 </section>
 
-<!-- 9 APLICACIONES -->
-<section class="sec" id="aplicaciones">
+<!-- 9 PORTADAS DE FEED -->
+<section class="sec" id="portadas">
   <div class="page clara">
-    <div class="hd"><span class="num">08</span><h2>Aplicaciones</h2></div>
-    <div class="apps">
-      <div class="app">
-        <div class="mock m-story"><div class="in">
-          <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(420*var(--k));left:calc(330*var(--k));top:calc(170*var(--k))">
-          <div class="fotobg" style="left:0;right:0;top:calc(440*var(--k));height:calc(1000*var(--k));background-image:url(%%FOTO_XTRAIL%%);background-position:center 70%"></div>
-          <div class="modelo" style="left:calc(96*var(--k));top:calc(1530*var(--k))">MODELO 2019</div>
-          <div class="auto" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1600*var(--k))">Nissan X-Trail Exclusive</div>
-        </div></div>
-        <h3>Historia</h3><span class="dato">1080 × 1920 px</span>
-      </div>
-      <div class="app">
-        <div class="mock m-feed"><div class="in">
-          <div class="fotobg" style="left:0;right:0;top:0;height:calc(900*var(--k));background-image:url(%%FOTO_AUDI%%);background-position:center 62%"></div>
-          <div class="modelo" style="left:calc(80*var(--k));top:calc(960*var(--k))">MODELO 2017</div>
-          <div class="auto" style="left:calc(80*var(--k));right:calc(80*var(--k));top:calc(1022*var(--k))">Audi A4 TFSI Ambition</div>
-          <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(260*var(--k));left:calc(80*var(--k));bottom:calc(72*var(--k))">
-        </div></div>
-        <h3>Post de feed</h3><span class="dato">1080 × 1350 px</span>
-      </div>
-      <div class="app">
-        <div class="mock m-reel"><div class="in">
-          <div class="fotobg" style="left:0;right:0;top:0;bottom:calc(560*var(--k));background-image:url(%%FOTO_VERSA%%);background-position:center 55%"></div>
-          <div style="position:absolute;left:0;right:0;bottom:0;height:calc(560*var(--k));background:var(--negro)"></div>
-          <div class="titulo" style="left:calc(96*var(--k));right:calc(96*var(--k));top:calc(1440*var(--k));font-size:calc(62*var(--k))">Recibimos tu carro</div>
-          <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(300*var(--k));left:calc(96*var(--k));bottom:calc(120*var(--k))">
-        </div></div>
-        <h3>Portada de reel</h3><span class="dato">1080 × 1920 px</span>
+    <div class="hd"><span class="num">08</span><h2>Portadas de feed</h2></div>
+    <div class="portadas">
+      <figure><img src="%%PORTADA_AUDI%%" alt="Portada Audi A4 TFSI Ambition"></figure>
+      <figure><img src="%%PORTADA_XTRAIL%%" alt="Portada Nissan X-Trail Exclusive"></figure>
+      <div class="spec">
+        <div class="item"><span class="k">Formato</span><span class="v">1080 × 1350 px. Foto del carro a todo el lienzo.</span></div>
+        <div class="item"><span class="k">Fondo del texto</span><span class="v">Sombra negra en la parte inferior de la foto para que el texto se lea.</span></div>
+        <div class="item"><span class="k">Modelo</span><span class="v">MODELO 2017. Open Sans Regular, blanco, mayúscula.</span></div>
+        <div class="item"><span class="k">Carro</span><span class="v">AUDI A4 TFSI AMBITION. Open Sans Bold, blanco, mayúscula.</span></div>
+        <div class="item"><span class="k">Posición</span><span class="v">Abajo a la izquierda, margen de 84 px.</span></div>
       </div>
     </div>
-    <div class="ft"><span>Manual de marca</span><span>08 / 08</span></div>
+    <div class="ft"><span>Manual de marca</span><span>08 / 09</span></div>
+  </div>
+</section>
+
+<!-- 10 MOVMAX -->
+<section class="sec" id="movmax">
+  <div class="page oscura">
+    <div class="hd"><span class="num">09</span><h2>Movmax</h2></div>
+    <div class="movmax">
+      <figure>
+        <img class="tel" src="%%MOVMAX_ACTUAL%%" alt="Movmax actual">
+        <div class="estado"><h3>Actual</h3></div>
+      </figure>
+      <figure>
+        <div class="mock tel"><div class="in">
+          <img class="lg" src="%%LOGO_BLANCO%%" alt="" style="width:calc(340*var(--k));left:calc(370*var(--k));top:calc(130*var(--k))">
+          <div class="disp" style="top:calc(220*var(--k));font-size:calc(62*var(--k));letter-spacing:.16em;text-indent:.16em">Disponible</div>
+          <div class="fotobg" style="left:0;right:0;top:calc(400*var(--k));height:calc(1080*var(--k));background-image:url(%%MOVMAX_VIDEO%%)"></div>
+          <div class="modelo" style="left:calc(84*var(--k));top:calc(1530*var(--k));font-size:calc(44*var(--k))">Modelo 2013</div>
+          <div class="auto" style="left:calc(84*var(--k));right:calc(84*var(--k));top:calc(1590*var(--k));font-size:calc(64*var(--k))">Audi Q7 Quattro</div>
+          <div class="segura" style="height:calc(220*var(--k))"></div>
+        </div></div>
+        <div class="estado"><h3>Propuesta</h3></div>
+      </figure>
+      <div class="spec">
+        <div class="item"><span class="k">Formato</span><span class="v">Video vertical 1080 × 1920 px con tomas del carro andando.</span></div>
+        <div class="item"><span class="k">Arriba</span><span class="v">Logo oficial y DISPONIBLE en Monument, sobre franja negra.</span></div>
+        <div class="item"><span class="k">Abajo</span><span class="v">Modelo y carro en Open Sans, igual que las portadas de feed.</span></div>
+        <div class="item"><span class="k">Lectura</span><span class="v">Nunca texto blanco sobre cielo o piso claro. Siempre sobre franja negra.</span></div>
+        <div class="item"><span class="k">Zona segura</span><span class="v">Deja libres los 220 px inferiores: ahí van los botones de Instagram.</span></div>
+      </div>
+    </div>
+    <div class="ft"><span>Hoy: tipografías fuera de la marca y texto sobre zonas claras</span><span>09 / 09</span></div>
   </div>
 </section>
 
