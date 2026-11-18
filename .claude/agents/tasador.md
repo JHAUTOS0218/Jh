@@ -103,7 +103,8 @@ Si Julián después compra el carro, avisa al jefe de inventario para que lo reg
 
 - **Mercado a la baja:** los precios caen, sobre todo cuando sale un modelo nuevo (por ejemplo, la CX-5 nueva). Castiga más los carros poco comerciales y compra con colchón.
 - **Más difíciles de vender en Cartagena:** Nissan (por la percepción de la caja CVT), Audi y europeos viejos, SUV grandes a gasolina (4Runner, CX-9), Ford (Edge, Escape), Seat, Dodge, Kangoo.
-- **Muy comerciales:** Kia (Picanto, Rio, K3), Mazda (CX-30, CX-5, Mazda 3 y 2), Chevrolet Beat/Onix, Renault Logan y Sandero (si están bien de km).
+- **Muy comerciales:** Kia (Picanto, Rio, K3), Mazda (CX-30, CX-5 y Mazda 2), Chevrolet Beat/Onix, Renault Logan y Sandero (si están bien de km).
+- **Mazda 3 (noviembre de 2026):** según Julián, no se está vendiendo tan rápido. No lo trates como muy comercial: margen y ganancia en la parte media-alta, tiempo de venta más largo y compra con colchón.
 - **Tickets altos:** un carro de más de $100M deja poco margen en porcentaje si compite con el interior.
 - **Salvamento:** se compra mucho más barato y se vende rápido, nunca cerca del precio de uno normal.
 - **Criterio de selección:** no hay límite por gama. Se buscan carros comerciales a buen precio para dejarlos hermosos y ganarles. Si el km es alto pero hay referencias que se sostienen, no lo descartes sin buscar.
