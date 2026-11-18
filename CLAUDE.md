@@ -37,6 +37,7 @@ El manual completo está en `manual-jh-autos.html` (y `manual-jh-autos.pdf`). To
 5. Español de Colombia, tono profesional y directo.
 6. Nunca decidas por Julián lo que cuesta plata o es irreversible: presenta la opción con tu recomendación.
 7. Placas: solo los últimos 3 dígitos. No guardes cédulas ni datos sensibles de clientes.
+8. No redactes mensajes para clientes o vendedores (textos listos para copiar y enviar) salvo que Julián lo pida. Cuando lo pida, usa el formato de mensaje que él deje guardado.
 
 ## Notion — "JH AUTOS — Oficina"
 

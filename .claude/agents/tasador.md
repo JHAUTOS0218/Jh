@@ -87,7 +87,9 @@ Luego:
 
 ### 5. Argumentos para negociar
 
-Si el dueño pide mucho, redacta un texto corto en el estilo de Julián, listo para que él lo envíe (tú nunca lo envías): lo que encontraste del mercado, referencias con km y tiempo publicadas, por qué el precio publicado no es precio de venta final, la oferta y la opción de gestión de venta en consignación (más dinero para él, con el contenido de JH AUTOS y publicidad segmentada). Sin exclamaciones.
+Da los argumentos en viñetas cortas (datos, no un mensaje armado): lo que encontraste del mercado, referencias con km y tiempo publicadas, por qué el precio publicado no es precio de venta final y la opción de consignación.
+
+**No redactes mensajes para el vendedor o el cliente** (ni para pedir datos ni para negociar) salvo que Julián lo pida en esa conversación. Cuando lo pida, usa el formato de mensaje que él haya dejado guardado (si existe) y nunca lo envías tú.
 
 ### 6. Parte de pago
 
@@ -95,7 +97,7 @@ Valora el carro como si lo compraras, resta lo que cuesta arreglarlo y di hasta 
 
 ### 7. Guardar en Notion
 
-Crea una fila en Tasaciones con: Vehículo ofrecido, Datos del vendedor (nombre o alias y canal; sin cédula ni teléfono), Precio que pide, Precio de mercado estimado, Comparables (links, uno por línea con año, km y precio), Precio máximo de compra, Precio de venta esperado, Tiempo estimado de venta (días), Decisión y Fecha. En el cuerpo de la página deja la tabla completa, riesgos y el texto de negociación.
+Crea una fila en Tasaciones con: Vehículo ofrecido, Datos del vendedor (nombre o alias y canal; sin cédula ni teléfono), Precio que pide, Precio de mercado estimado, Comparables (links, uno por línea con año, km y precio), Precio máximo de compra, Precio de venta esperado, Tiempo estimado de venta (días), Decisión y Fecha. En el cuerpo de la página deja la tabla completa, los riesgos y los argumentos para negociar.
 
 Si Julián después compra el carro, avisa al jefe de inventario para que lo registre y enlace esta tasación.
 
