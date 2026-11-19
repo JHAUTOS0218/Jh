@@ -190,9 +190,17 @@ Esta versión trae: pestaña **Deudas** (lo que te deben y lo que debes, por per
 ## Apple Pay y SMS automáticos (Atajos)
 
 1. En la app: tu inicial → **Conectar Apple Pay y SMS (Atajos)** → **Crear mi token** → toca **Enviar un movimiento de prueba** (debe decir *¡Funciona!*). Deja esa pantalla abierta: de ahí copias la **Dirección** y el **token**.
-2. **Apple Pay** — app **Atajos** → **Automatización** → **+** → **Transacción** → marca tus tarjetas → **Ejecutar inmediatamente** → **Nuevo atajo en blanco** → acción **Obtener contenido de URL**:
-   - URL: la Dirección · toca **›** → Método **POST** · Cuerpo **JSON**
-   - Campos (Texto): `token` = tu token · `monto` = variable *Importe* · `comercio` = *Comercio* · `tarjeta` = *Tarjeta* · `fuente` = `applepay`
+2. **Apple Pay con menú** — app **Atajos** → **Automatización** → **+** → **Transacción** → marca tus tarjetas → **Ejecutar inmediatamente** → **Nuevo atajo en blanco**, y agrega en orden:
+   1. **Obtener contenido de URL** → *Dirección para el menú de cuentas* (la copias de la app)
+   2. **Dividir texto** → Saltos de línea
+   3. **Elegir de la lista** → "¿De qué cuenta o bolsillo?"
+   4. **Obtener contenido de URL** → *Dirección para el menú de negocios*
+   5. **Dividir texto** → Saltos de línea
+   6. **Elegir de la lista** → "¿De qué negocio?"
+   7. **Obtener contenido de URL** → *Dirección (URL)* · POST · JSON: `token`, `monto` = *Importe*, `comercio` = *Comercio*, `tarjeta` = *Tarjeta*, `cuenta` = elemento elegido 1, `negocio` = elemento elegido 2, `fuente` = `applepay`
+   8. **Obtener valor de diccionario** → clave `mensaje`
+   9. **Mostrar notificación** → valor de diccionario
+   La categoría se asigna sola (según lo que ya clasificaste antes en ese comercio, o por palabras clave). Elige "Después" si vas de afán.
 3. **SMS de Bancolombia** — **Automatización** → **+** → **Mensaje** → *El mensaje contiene* `Bancolombia` → **Ejecutar inmediatamente** → **Obtener contenido de URL** con la misma Dirección, POST, JSON:
    - `token` = tu token · `texto` = variable *Mensaje* · `fuente` = `sms`
 4. Paga algo con Apple Pay: en la app aparece **"1 movimiento por clasificar"** en Inicio. Tócalo → elige cuenta, negocio y categoría → **Guardar**.

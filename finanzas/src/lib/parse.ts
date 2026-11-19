@@ -78,3 +78,28 @@ export function parseBankSms(text: string): ParsedSms {
 export function todayBogota(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
+
+/** Palabras clave → posibles nombres de categoría (se busca la primera que exista en el negocio elegido) */
+const HINTS: [RegExp, string[]][] = [
+  [/terpel|primax|texaco|esso|biomax|zeuss|petrobras|gasolin|combustible|eds /i, ["Gasolina", "Moto y carro", "transporte"]],
+  [/uber|didi|cabify|indrive|taxi|peaje|parqueadero|parking|transmilenio|metro /i, ["transporte", "Gasolina"]],
+  [/exito|éxito|olimpica|olímpica|\bara\b|\bd1\b|jumbo|carulla|pricesmart|makro|isimo|surtimax|mercado|supermercado/i, ["Mercado"]],
+  [/rappi|ifood|domicilio|restaurante|crepes|frisby|kfc|mcdonald|burger|pizza|cafe|café|starbucks|juan valdez|panaderia|panadería|corral|subway|wok/i, ["Comida", "Atención a clientes"]],
+  [/netflix|spotify|apple\.com|icloud|google|youtube|disney|hbo|max\.com|prime video|amazon prime|chatgpt|openai|claude|anthropic|canva|adobe/i, ["Suscripciones", "Plan de datos"]],
+  [/claro|tigo|movistar|\bwom\b|etb|une /i, ["Plan de datos", "Servicios", "Suscripciones"]],
+  [/facebook|meta|instagram|fb\.me|ads/i, ["Meta Ads", "Publicidad"]],
+  [/drogueria|droguería|farmacia|cruz verde|farmatodo|clinica|clínica|medic|laboratorio|odontolog/i, ["Salud"]],
+  [/homecenter|ferreteria|ferretería|easy|constructor/i, ["Oficina", "Equipos", "Mantenimiento", "Alistamiento"]],
+  [/zara|falabella|arturo calle|h&m|bershka|pull&bear|studio f|tennis|nike|adidas|ropa/i, ["Ropa"]],
+  [/cine|procinal|cinecolombia|cinemark|bar |discoteca|licorera|teatro|concierto|tuboleta/i, ["Salidas"]],
+  [/taller|lavadero|repuesto|llanta|montallanta|lubricante|aceite/i, ["Alistamiento", "Mantenimiento", "Moto y carro"]],
+  [/runt|transito|tránsito|notaria|notaría|soat|impuesto vehicular|traspaso/i, ["Traspasos", "Trámites", "Moto y carro"]],
+  [/epm|electricaribe|afinia|air-e|acueducto|gases|vanti|energia|energía|agua/i, ["Servicios"]],
+  [/arriendo|administracion|administración|inmobiliaria/i, ["Vivienda", "Oficina"]],
+];
+
+export function categoryHints(text: string): string[] {
+  const out: string[] = [];
+  for (const [re, names] of HINTS) if (re.test(text)) out.push(...names.filter((n) => !out.includes(n)));
+  return out;
+}

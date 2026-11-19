@@ -80,23 +80,38 @@ export default function ShortcutsSetup() {
         </>
       )}
 
-      <h3 className="h-section">2 · Automatización de Apple Pay</h3>
+      {token && (
+        <>
+          <CopyBox label="Dirección para el menú de cuentas" value={`${endpoint}?token=${token}&lista=cuentas`} />
+          <CopyBox label="Dirección para el menú de negocios" value={`${endpoint}?token=${token}&lista=negocios`} />
+        </>
+      )}
+
+      <h3 className="h-section">2 · Automatización de Apple Pay (con menú)</h3>
+      <p className="small muted" style={{ margin: "0 2px 8px" }}>Al pagar te pregunta la cuenta o bolsillo y el negocio. La categoría se pone sola y te llega una notificación con el resultado.</p>
       <ol className="small" style={{ paddingLeft: 20, lineHeight: 1.6, margin: 0 }}>
-        <li>Abre <b>Atajos</b> → pestaña <b>Automatización</b> → <b>+</b> (Nueva automatización).</li>
-        <li>Elige <b>Transacción</b> (Wallet). Marca tus tarjetas → <b>Ejecutar inmediatamente</b> → <b>Siguiente</b>.</li>
-        <li>Toca <b>Nuevo atajo en blanco</b> y agrega la acción <b>Obtener contenido de URL</b>.</li>
-        <li>En la URL pega la <b>Dirección</b> de arriba. Toca la flecha <b>›</b>: Método <b>POST</b>, Cuerpo <b>JSON</b>.</li>
-        <li>Agrega estos campos (tipo <b>Texto</b>):
-          <br />• <b>token</b> → pega tu token
-          <br />• <b>monto</b> → variable <i>Importe</i> (o <i>Monto</i>)
+        <li>Abre <b>Atajos</b> → <b>Automatización</b> → <b>+</b> → <b>Transacción</b>. Marca tus tarjetas → <b>Ejecutar inmediatamente</b> → <b>Siguiente</b> → <b>Nuevo atajo en blanco</b>.</li>
+        <li>Acción <b>Obtener contenido de URL</b> → pega la <b>Dirección para el menú de cuentas</b>.</li>
+        <li>Acción <b>Dividir texto</b> → separador: <b>Saltos de línea</b>.</li>
+        <li>Acción <b>Elegir de la lista</b> → texto: <i>¿De qué cuenta o bolsillo?</i></li>
+        <li>Acción <b>Obtener contenido de URL</b> → pega la <b>Dirección para el menú de negocios</b>.</li>
+        <li>Acción <b>Dividir texto</b> → <b>Saltos de línea</b>.</li>
+        <li>Acción <b>Elegir de la lista</b> → texto: <i>¿De qué negocio?</i></li>
+        <li>Acción <b>Obtener contenido de URL</b> → pega la <b>Dirección (URL)</b> de arriba → toca <b>›</b>: Método <b>POST</b>, Cuerpo <b>JSON</b>, con estos campos de tipo Texto:
+          <br />• <b>token</b> → tu token
+          <br />• <b>monto</b> → variable <i>Importe</i>
           <br />• <b>comercio</b> → variable <i>Comercio</i>
           <br />• <b>tarjeta</b> → variable <i>Tarjeta</i>
+          <br />• <b>cuenta</b> → el <i>Elemento elegido</i> del primer menú
+          <br />• <b>negocio</b> → el <i>Elemento elegido</i> del segundo menú
           <br />• <b>fuente</b> → escribe <b>applepay</b>
         </li>
-        <li>Opcional: agrega <b>Mostrar notificación</b> con el resultado.</li>
+        <li>Acción <b>Obtener valor de diccionario</b> → clave <b>mensaje</b>.</li>
+        <li>Acción <b>Mostrar notificación</b> → el <i>Valor de diccionario</i>.</li>
       </ol>
+      <p className="muted xsmall" style={{ marginTop: 8 }}>Si vas de afán, elige “Después” en los menús y queda en Por clasificar.</p>
 
-      <h3 className="h-section">3 · Automatización de SMS de Bancolombia</h3>
+      <h3 className="h-section">3 · Automatización de SMS de Bancolombia (sin menú)</h3>
       <ol className="small" style={{ paddingLeft: 20, lineHeight: 1.6, margin: 0 }}>
         <li>En Atajos → <b>Automatización</b> → <b>+</b> → <b>Mensaje</b>.</li>
         <li><b>El mensaje contiene</b>: <b>Bancolombia</b> → <b>Ejecutar inmediatamente</b> → Siguiente.</li>
