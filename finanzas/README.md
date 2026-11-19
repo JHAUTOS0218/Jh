@@ -5,6 +5,7 @@ Next.js + Supabase + Vercel. Guía de instalación en español: **[GUIA.md](./GU
 
 ## Estructura
 - `supabase/01-fase1.sql` — esquema (tablas, seguridad RLS, saldos, conversión USD, datos iniciales).
+- `supabase/02-deudas-y-apariencia.sql` — deudas/cuentas por cobrar, movimientos `debt_in`/`debt_out` (no son ingreso ni gasto), color de la app.
 - `src/lib/` — formato de pesos/fechas, conexión a Supabase, estado global, estadísticas, CSV.
 - `src/components/` — barra inferior, hojas, filas deslizables, formulario de movimientos, gráficas.
 - `src/app/` — pantallas: Inicio, Movimientos, Estadísticas, Más (Cuentas, Negocios, Cuadre).

@@ -14,6 +14,7 @@
   --petrol: #1e5b5a;
   --petrol-deep: #123d3c;
   --petrol-soft: #e4efee;
+  --petrol-rgb: 30, 91, 90;
   --olive: #6e7b3c;
   --olive-soft: #eef1e3;
   --silver: #b7bec0;
@@ -72,7 +73,7 @@ input, select, textarea { font-size: 16px; } /* evita el zoom de iOS */
 .hero {
   position: relative; overflow: hidden;
   background: linear-gradient(140deg, var(--petrol) 0%, var(--petrol-deep) 100%);
-  color: #fff; border-radius: 26px; padding: 22px 20px 18px; box-shadow: 0 12px 30px rgba(18, 61, 60, 0.28);
+  color: #fff; border-radius: 26px; padding: 22px 20px 18px; box-shadow: 0 12px 30px rgba(var(--petrol-rgb), 0.3);
   touch-action: pan-y; user-select: none;
 }
 .hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); }
@@ -150,10 +151,10 @@ input, select, textarea { font-size: 16px; } /* evita el zoom de iOS */
   border-top: 1px solid var(--line);
   padding-bottom: var(--safe-bottom);
 }
-.tabbar .inner { max-width: 560px; margin: 0 auto; height: var(--tabbar-h); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; }
-.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; color: var(--muted); font-weight: 600; }
+.tabbar .inner { max-width: 560px; margin: 0 auto; height: var(--tabbar-h); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; padding: 0 4px; }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; color: var(--muted); font-weight: 600; white-space: nowrap; min-width: 0; }
 .tab.on { color: var(--petrol); }
-.fab { justify-self: center; width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(140deg, var(--petrol), var(--petrol-deep)); color: #fff; display: grid; place-items: center; box-shadow: 0 8px 20px rgba(18,61,60,0.35), inset 0 1px 0 rgba(255,255,255,0.25); margin-top: -22px; border: 3px solid #fff; }
+.fab { justify-self: center; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(140deg, var(--petrol), var(--petrol-deep)); color: #fff; display: grid; place-items: center; box-shadow: 0 8px 20px rgba(var(--petrol-rgb), 0.38), inset 0 1px 0 rgba(255,255,255,0.25); margin-top: -22px; border: 3px solid #fff; }
 .fab:active { transform: scale(0.94); }
 
 /* ---------- Hojas (bottom sheet) ---------- */
@@ -235,7 +236,7 @@ textarea.input { height: 80px; padding: 12px 14px; resize: none; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 18px); background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 999px; font-size: 14px; font-weight: 600; z-index: 80; animation: fade 0.2s; max-width: 90vw; text-align: center; }
 
 .center-screen { min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; padding: 24px; max-width: 420px; margin: 0 auto; }
-.brand-mark { width: 76px; height: 76px; border-radius: 22px; background: linear-gradient(140deg, var(--petrol), var(--petrol-deep)); color: #fff; display: grid; place-items: center; font-family: var(--display); font-size: 24px; letter-spacing: 0.04em; margin-bottom: 22px; box-shadow: 0 12px 30px rgba(18,61,60,0.3); }
+.brand-wrap { margin-bottom: 22px; }
 .spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--petrol-soft); border-top-color: var(--petrol); animation: spin 0.8s linear infinite; margin: 0 auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -245,3 +246,27 @@ textarea.input { height: 80px; padding: 12px 14px; resize: none; }
 .split + .split { border-top: 1px dashed var(--line); }
 .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
 .tag.usd { background: var(--olive-soft); color: var(--olive); }
+
+/* ---------- Deudas ---------- */
+.progress { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 7px; }
+.progress > div { height: 100%; border-radius: 3px; background: var(--petrol); }
+.person-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; background: var(--surface); }
+.person-head .n { font-weight: 700; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--petrol-soft); color: var(--petrol); display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
+.debt-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.debt-sum .box { border-radius: 18px; padding: 14px; }
+.debt-sum .box.owed { background: #e3f1ec; color: #12523d; }
+.debt-sum .box.owe { background: var(--expense-soft); color: #7c2a20; }
+.debt-sum .k { font-size: 12px; opacity: 0.85; }
+.debt-sum .v { font-weight: 700; font-size: 18px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.net-line { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 12px 14px; border-radius: 16px; background: var(--surface); font-size: 14px; }
+.color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.color-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); text-align: center; }
+.color-opt .sw { width: 46px; height: 46px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--line); }
+.color-opt.on .sw { box-shadow: 0 0 0 2.5px var(--ink); }
+.ico.debt_in { background: #e3f1ec; color: var(--income); }
+.ico.debt_out { background: var(--surface-2); color: var(--ink-2); }
+.amt.debt_in { color: var(--income); }
+.amt.debt_out { color: var(--ink-2); }
+.me-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--petrol); color: #fff; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(var(--petrol-rgb), 0.3); }
+.greet { font-size: 13px; color: var(--muted); margin: 0 2px 2px; }

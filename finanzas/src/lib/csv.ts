@@ -1,6 +1,6 @@
 import type { Account, Business, Category, Tx } from "./types";
 
-const KIND: Record<string, string> = { expense: "Gasto", income: "Ingreso", transfer: "Transferencia" };
+const KIND: Record<string, string> = { expense: "Gasto", income: "Ingreso", transfer: "Transferencia", debt_in: "Entrada por deuda", debt_out: "Salida por deuda" };
 
 function cell(v: unknown) {
   const s = v == null ? "" : String(v);
@@ -18,7 +18,8 @@ export function txsToCSV(
   const rows = txs.map((t) => {
     const a = look.acc(t.account_id);
     const to = look.acc(t.to_account_id);
-    const signed = t.kind === "income" ? t.amount : -t.amount;
+    const plus = t.kind === "income" || t.kind === "debt_in";
+    const signed = plus ? t.amount : -t.amount;
     return [
       t.date,
       KIND[t.kind] ?? t.kind,
@@ -32,7 +33,7 @@ export function txsToCSV(
       to?.name ?? "",
       num(t.to_amount),
       num(t.fx_rate),
-      num(t.kind === "income" ? t.amount_cop : -t.amount_cop),
+      num(plus ? t.amount_cop : -t.amount_cop),
       t.note ?? "",
     ];
   });

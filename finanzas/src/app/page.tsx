@@ -5,14 +5,16 @@ import Link from "next/link";
 import { useData, useTxs } from "@/lib/store";
 import { addMonths, currentYM, money, monthLabel, monthRange, monthShort, ymKey } from "@/lib/format";
 import { summarize } from "@/lib/stats";
-import { BusinessSwitcher, BizDot } from "@/components/Business";
+import { BizDot } from "@/components/Business";
+import { TopBar } from "@/components/TopBar";
+import { daysUntilDue, nextDueText } from "@/components/Debts";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
 import { AccountIcon } from "@/components/AccountIcon";
 import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus } from "@/components/Icons";
 
 export default function Home() {
-  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx } = useData();
+  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts } = useData();
   const now = currentYM();
   const from = monthRange(addMonths(now, -5)).from;
   const { data: txs, loading } = useTxs({ from, businessId: activeId });
@@ -36,6 +38,12 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txs, activeId, active, catById]);
 
+  const myDebts = debts.filter((d) => d.remaining > 0 && (!activeId || d.business_id === activeId));
+  const owedTotal = myDebts.filter((d) => d.direction === "owed").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
+  const oweTotal = myDebts.filter((d) => d.direction === "owe").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
+  const dueSoon = myDebts.filter((d) => d.due_day && daysUntilDue(d.due_day) <= 5).sort((a, b) => daysUntilDue(a.due_day!) - daysUntilDue(b.due_day!));
+  const firstName = (settings.display_name || "").trim().split(/\s+/)[0];
+
   const lowAccounts = myAccounts.filter((a) => a.min_balance != null && (balances[a.id] ?? 0) < a.min_balance);
 
   // --- deslizar la tarjeta para cambiar de negocio ---
@@ -57,13 +65,9 @@ export default function Home() {
 
   return (
     <main className="page">
-      <div className="topbar">
-        <BusinessSwitcher />
-        <div className="actions">
-          <Link href="/mas/cuentas" className="icon-btn" aria-label="Cuentas"><IWallet size={20} /></Link>
-        </div>
-      </div>
+      <TopBar right={<Link href="/mas/cuentas" className="icon-btn" aria-label="Cuentas"><IWallet size={20} /></Link>} />
 
+      {firstName && <p className="greet">Hola, <b style={{ color: "var(--ink)" }}>{firstName}</b> 👋</p>}
       <section className="hero" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="label">{active ? `Plata en ${active.name}` : "Plata total hoy"}</div>
         <div className="big num">{money(totalCOP)}</div>
@@ -87,8 +91,35 @@ export default function Home() {
           <span style={{ color: "rgba(255,255,255,0.75)" }}>{active?.partner_share ? "Tu utilidad del mes" : "Utilidad del mes"}</span>
           <b className="num">{money(sum.myProfit)}</b>
         </div>
+        {(owedTotal > 0 || oweTotal > 0) && (
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 13.5 }}>
+            <span style={{ color: "rgba(255,255,255,0.75)" }}>Neto con deudas</span>
+            <b className="num">{money(totalCOP + owedTotal - oweTotal)}</b>
+          </div>
+        )}
         <div className="dots">{order.map((id, i) => <span key={id ?? "g"} className={i === idx ? "on" : ""} />)}</div>
       </section>
+
+      {(owedTotal > 0 || oweTotal > 0) && (
+        <Link href="/deudas" className="grid2" style={{ marginTop: 14 }}>
+          <div className="kpi income"><div className="k">Me deben</div><div className="v num">{money(owedTotal)}</div></div>
+          <div className="kpi expense"><div className="k">Debo</div><div className="v num">{money(oweTotal)}</div></div>
+        </Link>
+      )}
+
+      {dueSoon.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          {dueSoon.map((d) => (
+            <Link key={d.id} href={`/deudas?id=${d.id}`} className={"alert" + (d.direction === "owe" ? " danger" : "")} style={{ display: "flex" }}>
+              <IAlert size={18} />
+              <span>
+                {d.direction === "owe" ? <>Pago a <b>{d.person}</b></> : <><b>{d.person}</b> te debe pagar</>} {nextDueText(d)}
+                {d.installment ? <> · cuota {money(d.installment, d.currency)}</> : null}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {lowAccounts.length > 0 && (
         <div style={{ marginTop: 16 }}>

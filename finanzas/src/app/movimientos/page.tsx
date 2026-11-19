@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useData, useTxs } from "@/lib/store";
 import { currentYM, money, monthRange, type YM } from "@/lib/format";
 import type { TxKind } from "@/lib/types";
-import { BusinessSwitcher } from "@/components/Business";
+import { TopBar } from "@/components/TopBar";
 import { TxList } from "@/components/TxList";
 import { MonthNav } from "@/components/ui";
 import { AccountSheet } from "@/components/TxForm";
@@ -56,12 +56,7 @@ function Movements() {
 
   return (
     <main className="page">
-      <div className="topbar">
-        <BusinessSwitcher />
-        <div className="actions">
-          <button className="icon-btn" onClick={exportCSV} aria-label="Exportar"><IDownload size={19} /></button>
-        </div>
-      </div>
+      <TopBar right={<button className="icon-btn" onClick={exportCSV} aria-label="Exportar"><IDownload size={19} /></button>} />
       <h1 className="title" style={{ margin: "6px 2px 14px" }}>Movimientos</h1>
 
       <div className="search" style={{ marginBottom: 12 }}>

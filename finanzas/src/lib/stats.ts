@@ -14,7 +14,7 @@ export interface Summary {
 export function summarize(txs: Tx[], businessId: string | null, catById: (id: string | null) => Category | undefined, biz?: Business | null): Summary {
   let income = 0, expense = 0, partnerPaid = 0;
   for (const t of txs) {
-    if (t.status !== "confirmed" || t.kind === "transfer") continue;
+    if (t.status !== "confirmed" || (t.kind !== "income" && t.kind !== "expense")) continue;
     if (businessId && t.business_id !== businessId) continue;
     if (t.kind === "income") income += t.amount_cop;
     else {

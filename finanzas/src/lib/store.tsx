@@ -3,7 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { sb } from "./supabase";
-import type { Account, Business, Category, Currency, Settings, Tx } from "./types";
+import { DEFAULT_DEBT_CATEGORIES, type Account, type Business, type Category, type Currency, type Debt, type Settings, type Tx } from "./types";
+import { applySavedTheme, applyTheme, DEFAULT_THEME } from "./theme";
 
 interface Data {
   session: Session | null;
@@ -15,6 +16,11 @@ interface Data {
   allAccounts: Account[];
   balances: Record<string, number>;
   settings: Settings;
+  /** deudas activas con lo pagado y lo que falta */
+  debts: Debt[];
+  allDebts: Debt[];
+  /** true si falta correr la actualización 02 en Supabase */
+  needsDbUpdate: boolean;
   /** Negocio activo ("espacio"). null = Global */
   activeId: string | null;
   setActiveId: (id: string | null) => void;
@@ -50,13 +56,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [categories, setCats] = useState<Category[]>([]);
   const [allAccounts, setAccs] = useState<Account[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
-  const [settings, setSettings] = useState<Settings>({ usd_rate: 4000, display_name: null });
+  const [settings, setSettings] = useState<Settings>({ usd_rate: 4000, display_name: null, theme_color: DEFAULT_THEME, debt_categories: DEFAULT_DEBT_CATEGORIES });
+  const [allDebts, setDebts] = useState<Debt[]>([]);
+  const [needsDbUpdate, setNeedsDbUpdate] = useState(false);
   const [activeId, setActiveIdState] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [txDraft, setTxDraft] = useState<Partial<Tx> | null | undefined>(undefined);
 
   // --- sesión ---
   useEffect(() => {
+    applySavedTheme();
     const client = sb();
     client.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -77,12 +86,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     const c = sb();
-    const [b, cat, a, bal, st] = await Promise.all([
+    const [b, cat, a, bal, st, dbt, dbal] = await Promise.all([
       c.from("businesses").select("*").order("sort").order("created_at"),
       c.from("categories").select("*").order("sort").order("created_at"),
       c.from("accounts").select("*").order("sort").order("created_at"),
       c.from("account_balances").select("*"),
       c.from("settings").select("*").maybeSingle(),
+      c.from("debts").select("*").order("created_at"),
+      c.from("debt_balances").select("*"),
     ]);
     const err = b.error || cat.error || a.error || bal.error || st.error;
     if (err) throw err;
@@ -94,7 +105,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const map: Record<string, number> = {};
     (bal.data as { account_id: string; balance: number }[]).forEach((r) => (map[r.account_id] = Number(r.balance)));
     setBalances(map);
-    if (st.data) setSettings({ usd_rate: Number(st.data.usd_rate), display_name: st.data.display_name });
+    if (st.data) {
+      const next: Settings = {
+        usd_rate: Number(st.data.usd_rate),
+        display_name: st.data.display_name,
+        theme_color: st.data.theme_color || DEFAULT_THEME,
+        debt_categories: st.data.debt_categories?.length ? st.data.debt_categories : DEFAULT_DEBT_CATEGORIES,
+      };
+      setSettings(next);
+      applyTheme(next.theme_color);
+    }
+    // Deudas (si la actualización 02 no se ha corrido, la app sigue funcionando sin esta parte)
+    if (dbt.error || dbal.error) {
+      setNeedsDbUpdate(true);
+      setDebts([]);
+    } else {
+      setNeedsDbUpdate(false);
+      const paid = new Map((dbal.data as { debt_id: string; paid: number }[]).map((r) => [r.debt_id, Number(r.paid)]));
+      setDebts(
+        (dbt.data as Debt[]).map((d) => {
+          const total = Number(d.total_amount);
+          const p = paid.get(d.id) ?? 0;
+          return { ...d, total_amount: total, installment: d.installment == null ? null : Number(d.installment), paid: p, remaining: Math.max(0, Math.round((total - p) * 100) / 100) };
+        })
+      );
+    }
   }, []);
 
   // --- carga inicial (y crea negocios por defecto la primera vez) ---
@@ -122,6 +157,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const businesses = useMemo(() => allBusinesses.filter((b) => !b.archived), [allBusinesses]);
   const accounts = useMemo(() => allAccounts.filter((a) => !a.archived), [allAccounts]);
+  const debts = useMemo(() => allDebts.filter((d) => !d.archived), [allDebts]);
 
   // si el negocio activo ya no existe, volver a Global
   useEffect(() => {
@@ -142,6 +178,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       allAccounts,
       balances,
       settings,
+      debts,
+      allDebts,
+      needsDbUpdate,
       activeId,
       setActiveId,
       active: activeId ? bMap.get(activeId) ?? null : null,
@@ -156,7 +195,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       txDraft,
       closeTx: () => setTxDraft(undefined),
     };
-  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, balances, settings, activeId, setActiveId, version, refresh, bump, txDraft]);
+  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, balances, settings, debts, allDebts, needsDbUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -178,6 +217,8 @@ export function normalizeTx(r: Tx): Tx {
     amount: Number(r.amount),
     amount_cop: Number(r.amount_cop),
     to_amount: r.to_amount == null ? null : Number(r.to_amount),
+    debt_id: r.debt_id ?? null,
+    debt_role: r.debt_role ?? null,
     fx_rate: r.fx_rate == null ? null : Number(r.fx_rate),
   };
 }

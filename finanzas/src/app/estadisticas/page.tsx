@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { useData, useTxs } from "@/lib/store";
 import { addMonths, currentYM, money, monthLabel, monthRange, monthShort, ymKey, type YM } from "@/lib/format";
 import { byCategory, summarize } from "@/lib/stats";
-import { BusinessSwitcher, BizDot } from "@/components/Business";
+import { BizDot } from "@/components/Business";
+import { TopBar } from "@/components/TopBar";
 import { MonthBars, Donut, CatBars } from "@/components/Charts";
 import { MonthNav, Seg } from "@/components/ui";
 import { AccountIcon } from "@/components/AccountIcon";
@@ -51,7 +52,7 @@ export default function Stats() {
 
   return (
     <main className="page">
-      <div className="topbar"><BusinessSwitcher /></div>
+      <TopBar />
       <h1 className="title" style={{ margin: "6px 2px 14px" }}>Estadísticas</h1>
       <MonthNav value={ym} onChange={setYm} />
 

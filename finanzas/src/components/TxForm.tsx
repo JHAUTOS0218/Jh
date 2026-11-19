@@ -9,7 +9,7 @@ import type { Account, Currency, TxKind } from "@/lib/types";
 import { Seg, Sheet, toast } from "./ui";
 import { BizDot } from "./Business";
 import { AccountIcon } from "./AccountIcon";
-import { IChevR } from "./Icons";
+import { IChevR, IPlus } from "./Icons";
 
 /** Formulario para registrar o editar un gasto, ingreso o transferencia */
 export function TxForm() {
@@ -24,7 +24,7 @@ export function TxForm() {
 }
 
 function FormBody() {
-  const { txDraft, closeTx, accounts, businesses, categories, activeId, accById, bump, settings } = useData();
+  const { txDraft, closeTx, accounts, businesses, categories, activeId, accById, bump, refresh, settings } = useData();
   const editing = !!txDraft?.id;
 
   const defaultAcc =
@@ -33,6 +33,7 @@ function FormBody() {
     accounts[0];
 
   const [kind, setKind] = useState<TxKind>(txDraft?.kind ?? "expense");
+  const isDebt = kind === "debt_in" || kind === "debt_out";
   const [accountId, setAccountId] = useState<string | undefined>(defaultAcc?.id);
   const [toAccountId, setToAccountId] = useState<string | undefined>(txDraft?.to_account_id ?? undefined);
   const acc = accById(accountId);
@@ -76,7 +77,7 @@ function FormBody() {
   const valid =
     amount > 0 && !!acc &&
     (kind === "transfer" ? !!toAcc && toAcc.id !== acc.id && toAmount > 0 : !!businessId) &&
-    (cur !== "USD" || kind === "transfer" || rate > 0);
+    (cur !== "USD" || kind === "transfer" || isDebt || rate > 0);
 
   const save = async () => {
     if (!valid || !acc) return;
@@ -89,7 +90,7 @@ function FormBody() {
       to_account_id: kind === "transfer" ? toAcc!.id : null,
       to_amount: kind === "transfer" ? toAmount : null,
       business_id: kind === "transfer" ? null : businessId,
-      category_id: kind === "transfer" ? null : categoryId,
+      category_id: kind === "transfer" || isDebt ? null : categoryId,
       description: description.trim() || null,
       note: note.trim() || null,
       fx_rate: cur === "USD" ? (kind === "transfer" && crossCurrency ? Math.round(toAmount / amount) : rate || null) : null,
@@ -104,6 +105,16 @@ function FormBody() {
     toast(editing ? "Cambios guardados" : kind === "transfer" ? "Transferencia registrada" : kind === "income" ? "Ingreso registrado" : "Gasto registrado");
     closeTx();
     bump();
+  };
+
+  const addCategory = async () => {
+    if (!businessId) return;
+    const name = prompt(`Nueva categoría de ${kind === "income" ? "ingreso" : "gasto"}`);
+    if (!name?.trim()) return;
+    const { data, error } = await sb().from("categories").insert({ business_id: businessId, kind: kind === "income" ? "income" : "expense", name: name.trim(), sort: 99 }).select().single();
+    if (error) return toast(errorText(error));
+    await refresh();
+    setCategoryId(data.id);
   };
 
   const remove = async () => {
@@ -129,15 +140,22 @@ function FormBody() {
 
   return (
     <div>
-      <Seg
-        value={kind}
-        onChange={setKind}
-        options={[
-          { value: "expense", label: "Gasto", cls: "expense" },
-          { value: "income", label: "Ingreso", cls: "income" },
-          { value: "transfer", label: "Transferencia" },
-        ]}
-      />
+      {isDebt ? (
+        <div className="alert" style={{ background: "var(--petrol-soft)", color: "var(--petrol-deep)" }}>
+          Este movimiento es parte de una deuda ({kind === "debt_in" ? "entró plata" : "salió plata"}). No cuenta como ingreso ni gasto.
+          Puedes corregir el monto, la cuenta o la fecha.
+        </div>
+      ) : (
+        <Seg
+          value={kind}
+          onChange={setKind}
+          options={[
+            { value: "expense", label: "Gasto", cls: "expense" },
+            { value: "income", label: "Ingreso", cls: "income" },
+            { value: "transfer", label: "Transferencia" },
+          ]}
+        />
+      )}
 
       <div className="amount-box">
         <input
@@ -151,7 +169,12 @@ function FormBody() {
         <div className="cur">{cur === "USD" ? "Dólares" : "Pesos colombianos"}</div>
       </div>
 
-      {kind === "transfer" ? (
+      {isDebt ? (
+        <div className="field">
+          <span className="lbl">{kind === "debt_in" ? "¿A qué cuenta entró?" : "¿De qué cuenta salió?"}</span>
+          <AccountPicker account={acc} onClick={() => setPick("from")} />
+        </div>
+      ) : kind === "transfer" ? (
         <>
           <div className="field">
             <span className="lbl">Desde</span>
@@ -208,7 +231,7 @@ function FormBody() {
                   {c.name}
                 </button>
               ))}
-              {!cats.length && <span className="muted small">Este negocio no tiene categorías de {kind === "income" ? "ingreso" : "gasto"}.</span>}
+              <button type="button" className="chip outline" onClick={addCategory}><IPlus size={14} /> Nueva</button>
             </div>
           </div>
 
@@ -248,6 +271,7 @@ function FormBody() {
         open={pick !== null}
         onClose={() => setPick(null)}
         exclude={pick === "to" ? accountId : undefined}
+        currency={isDebt ? cur : undefined}
         onPick={(a) => {
           if (pick === "to") setToAccountId(a.id);
           else {
@@ -285,12 +309,12 @@ function AccountPicker({ account, placeholder = "Elige una cuenta", onClick }: {
   );
 }
 
-export function AccountSheet({ open, onClose, onPick, exclude }: { open: boolean; onClose: () => void; onPick: (a: Account) => void; exclude?: string }) {
+export function AccountSheet({ open, onClose, onPick, exclude, currency }: { open: boolean; onClose: () => void; onPick: (a: Account) => void; exclude?: string; currency?: Currency }) {
   const { businesses, accounts, balances } = useData();
   return (
     <Sheet open={open} onClose={onClose} title="Elige la cuenta">
       {businesses.map((b) => {
-        const list = accounts.filter((a) => a.business_id === b.id && a.id !== exclude);
+        const list = accounts.filter((a) => a.business_id === b.id && a.id !== exclude && (!currency || a.currency === currency));
         if (!list.length) return null;
         return (
           <div key={b.id}>

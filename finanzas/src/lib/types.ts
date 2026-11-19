@@ -1,5 +1,5 @@
 export type Currency = "COP" | "USD";
-export type TxKind = "expense" | "income" | "transfer";
+export type TxKind = "expense" | "income" | "transfer" | "debt_in" | "debt_out";
 export type CatKind = "income" | "expense";
 export type AccountType = "bank" | "pocket" | "cash" | "card" | "other";
 
@@ -53,12 +53,40 @@ export interface Tx {
   status: "confirmed" | "pending";
   source: string;
   created_at: string;
+  debt_id?: string | null;
+  debt_role?: "disbursement" | "payment" | null;
+}
+
+export type DebtDirection = "owe" | "owed"; // owe = yo debo · owed = me deben
+
+export interface Debt {
+  id: string;
+  direction: DebtDirection;
+  person: string;
+  description: string | null;
+  category: string | null;
+  business_id: string;
+  currency: Currency;
+  total_amount: number;
+  installment: number | null;
+  due_day: number | null;
+  start_date: string;
+  note: string | null;
+  archived: boolean;
+  created_at: string;
+  /** calculados en la app */
+  paid: number;
+  remaining: number;
 }
 
 export interface Settings {
   usd_rate: number;
   display_name: string | null;
+  theme_color: string;
+  debt_categories: string[];
 }
+
+export const DEFAULT_DEBT_CATEGORIES = ["Préstamo", "Venta a crédito", "Proveedor", "Tarjeta o crédito bancario", "Arriendo", "Otro"];
 
 export const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "bank", label: "Banco" },

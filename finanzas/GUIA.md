@@ -1,4 +1,6 @@
-# JH Finanzas · Guía para ponerla en tu iPhone (Fase 1)
+# JH Finanzas · Guía para ponerla en tu iPhone
+
+> **¿Ya la tenías instalada?** Salta a la sección **“Actualización 2: Deudas y colores”** al final.
 
 Tiempo aproximado: **30 a 40 minutos**, una sola vez. Todo se hace desde el navegador (computador o iPhone).
 No necesitas instalar programas.
@@ -37,6 +39,7 @@ La app está en la rama `claude/jh-finanzas-pwa-app-4vkrpv` (también trae el ma
      (github.com/JHAUTOS0218/Jh → carpeta `finanzas` → `supabase` → `01-fase1.sql`).
    - Clic en el ícono **Copy raw file** (dos cuadritos), vuelve a Supabase, pega todo y clic en **Run**.
    - Debe decir **Success. No rows returned**. ✅
+   - Repite lo mismo con el archivo **`02-deudas-y-apariencia.sql`** (misma carpeta): New query → pegar → Run.
 4. **Crear tu usuario.** Menú izquierdo → **Authentication** → **Users** → **Add user** → **Create new user**:
    - Escribe tu correo y una contraseña fuerte.
    - Marca ✅ **Auto Confirm User** → **Create user**.
@@ -124,3 +127,40 @@ el registro de nuevos usuarios está cerrado y la conexión es cifrada.
 
 **¿Cómo se actualiza la app?** Cada vez que yo suba cambios a GitHub, Vercel la publica sola en 1 minuto.
 En el iPhone basta con cerrarla y abrirla otra vez.
+
+---
+
+## Actualización 2: Deudas y colores (5 min)
+
+Esta versión trae: pestaña **Deudas** (lo que te deben y lo que debes, por persona, negocio y categoría),
+**color de la app** a tu gusto, tu **nombre** en el saludo, crear categorías desde el formulario y el **logo nuevo** (JH verde con signo $).
+
+1. **Base de datos:** Supabase → **SQL Editor** → **New query** → pega todo el archivo
+   `finanzas/supabase/02-deudas-y-apariencia.sql` → **Run** → debe decir *Success*.
+   (Mientras no lo corras, la app te muestra un aviso amarillo arriba.)
+2. **App:** Vercel la publica sola cuando subo los cambios. Cierra la app en el iPhone y ábrela de nuevo.
+3. **Ícono nuevo:** el iPhone guarda el ícono viejo. Para ver el nuevo, mantén presionado el ícono → **Eliminar app**
+   (no borra tus datos, están en Supabase) → vuelve a entrar en Safari → Compartir → **Agregar a pantalla de inicio**.
+
+### Prueba la actualización
+- [ ] Toca tu inicial (círculo arriba a la derecha) → **Tu nombre** → escribe “Julián”. En Inicio dirá “Hola, Julián”.
+- [ ] **Color de la app** → elige uno (o uno personalizado). Cambia al instante.
+- [ ] Pestaña **Deudas** → **+** → “Me deben” → persona, concepto, categoría, monto y negocio.
+      Prueba **“Dividir entre varios negocios”**: ej. Carlos te debe 6 M de JH Autos y 4 M de Oro → queda una deuda por negocio, agrupadas bajo Carlos.
+- [ ] Toca una deuda → **Registrar abono** → elige la cuenta. El saldo de la cuenta sube, la deuda baja, y **no** cuenta como ingreso.
+- [ ] “Yo debo” con **“Me prestaron esta plata y entró a una cuenta”**: el saldo sube, pero no es ingreso.
+- [ ] Pon **día de pago**: cuando falten 5 días o menos, Inicio te avisa.
+- [ ] En Inicio verás **Me deben / Debo** y el **Neto con deudas** dentro de la tarjeta.
+- [ ] **Editar categorías** de deudas: desde Deudas o desde Más → Categorías de deudas.
+
+### ¿Qué se puede editar dentro de la app?
+| Qué | Dónde |
+|---|---|
+| Tu nombre y color de la app | Tu inicial (arriba a la derecha) → Personalizar |
+| Cuentas: nombre, banco, tipo, moneda, saldo, mínimo | Más → Cuentas (o el ícono de billetera en Inicio) |
+| Negocios: nombre, color, socio y % | Más → Negocios y categorías |
+| Categorías de ingresos y gastos | Más → Negocios → toca el negocio · o “+ Nueva” en el formulario |
+| Categorías de deudas | Deudas → Editar categorías · o Más |
+| Deudas: todo (persona, monto, cuota, día, negocio) | Toca la deuda → Editar |
+| Movimientos y abonos | Desliza a la izquierda → Editar / Borrar |
+| Tasa del dólar | Más → Tasa del dólar |
