@@ -184,3 +184,17 @@ Esta versión trae: pestaña **Deudas** (lo que te deben y lo que debes, por per
 - [ ] ¿Te equivocaste? Toca **✓ Pagado** → **Deshacer**.
 - [ ] Para pausar uno sin borrarlo: tócalo → desmarca **Activo**.
 - [ ] También sirve para cobros fijos (ej. un local que arriendas): elige **Cobro (ingreso)**.
+
+---
+
+## Apple Pay y SMS automáticos (Atajos)
+
+1. En la app: tu inicial → **Conectar Apple Pay y SMS (Atajos)** → **Crear mi token** → toca **Enviar un movimiento de prueba** (debe decir *¡Funciona!*). Deja esa pantalla abierta: de ahí copias la **Dirección** y el **token**.
+2. **Apple Pay** — app **Atajos** → **Automatización** → **+** → **Transacción** → marca tus tarjetas → **Ejecutar inmediatamente** → **Nuevo atajo en blanco** → acción **Obtener contenido de URL**:
+   - URL: la Dirección · toca **›** → Método **POST** · Cuerpo **JSON**
+   - Campos (Texto): `token` = tu token · `monto` = variable *Importe* · `comercio` = *Comercio* · `tarjeta` = *Tarjeta* · `fuente` = `applepay`
+3. **SMS de Bancolombia** — **Automatización** → **+** → **Mensaje** → *El mensaje contiene* `Bancolombia` → **Ejecutar inmediatamente** → **Obtener contenido de URL** con la misma Dirección, POST, JSON:
+   - `token` = tu token · `texto` = variable *Mensaje* · `fuente` = `sms`
+4. Paga algo con Apple Pay: en la app aparece **"1 movimiento por clasificar"** en Inicio. Tócalo → elige cuenta, negocio y categoría → **Guardar**.
+
+Si llegan Apple Pay y SMS de la misma compra, la app los junta en uno (mismo valor en 15 minutos).
