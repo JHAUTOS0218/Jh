@@ -52,7 +52,10 @@ export function CardTile({ info, onEdit }: { info: CardInfo; onEdit: () => void 
             </div>
             <div className="split"><span className="muted">Cupo</span><span className="num">{money(limit)}</span></div>
             {overlimit > 0 && (
-              <div className="split"><span className="muted">Disponible con sobrecupo ({card.overlimit_pct}%)</span><span className="num">{money(available + overlimit)}</span></div>
+              <>
+                <div className="split"><span className="muted">Sobrecupo ({card.overlimit_pct}% del cupo)</span><span className="num">{money(overlimit)}</span></div>
+                <div className="split"><span className="muted">Disponible usando el sobrecupo</span><span className="num">{money(available + overlimit)}</span></div>
+              </>
             )}
           </>
         ) : (
@@ -192,8 +195,11 @@ export function CardForm({ info, onDone }: { info: CardInfo | null; onDone: () =
           <input id="card-limit" className="input num" inputMode="numeric" value={limit} onChange={(e) => setLimit(formatTyping(e.target.value))} placeholder="Ej. 7.200.000" />
         </div>
         <div className="field">
-          <label htmlFor="card-over">Sobrecupo (%)</label>
+          <label htmlFor="card-over">Sobrecupo (% del cupo)</label>
           <input id="card-over" className="input num" inputMode="decimal" value={overPct} onChange={(e) => setOverPct(e.target.value.replace(/[^\d,.]/g, ""))} placeholder="Ej. 10" />
+          {pLimit > 0 && Number(overPct.replace(",", ".")) > 0 && (
+            <p className="muted xsmall" style={{ margin: "6px 2px 0" }}>= {money(Math.round((pLimit * Number(overPct.replace(",", "."))) / 100))} de sobrecupo</p>
+          )}
         </div>
       </div>
       <div className="field">
