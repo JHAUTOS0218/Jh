@@ -1,0 +1,223 @@
+"use client";
+
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { sb } from "./supabase";
+import type { Account, Business, Category, Currency, Settings, Tx } from "./types";
+
+interface Data {
+  session: Session | null;
+  ready: boolean;
+  businesses: Business[];        // activos, ordenados
+  allBusinesses: Business[];     // incluye archivados
+  categories: Category[];
+  accounts: Account[];           // activas
+  allAccounts: Account[];
+  balances: Record<string, number>;
+  settings: Settings;
+  /** Negocio activo ("espacio"). null = Global */
+  activeId: string | null;
+  setActiveId: (id: string | null) => void;
+  active: Business | null;
+  version: number;
+  refresh: () => Promise<void>;
+  bump: () => void;
+  toCOP: (amount: number, cur: Currency) => number;
+  bizById: (id: string | null | undefined) => Business | undefined;
+  accById: (id: string | null | undefined) => Account | undefined;
+  catById: (id: string | null | undefined) => Category | undefined;
+  /** Abre el formulario de movimiento (nuevo o edición) */
+  openTx: (tx?: Partial<Tx> | null) => void;
+  txDraft: Partial<Tx> | null | undefined;
+  closeTx: () => void;
+}
+
+const Ctx = createContext<Data | null>(null);
+
+export const useData = () => {
+  const c = useContext(Ctx);
+  if (!c) throw new Error("useData fuera de DataProvider");
+  return c;
+};
+
+const ACTIVE_KEY = "jh-active-business";
+
+export function DataProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [allBusinesses, setBiz] = useState<Business[]>([]);
+  const [categories, setCats] = useState<Category[]>([]);
+  const [allAccounts, setAccs] = useState<Account[]>([]);
+  const [balances, setBalances] = useState<Record<string, number>>({});
+  const [settings, setSettings] = useState<Settings>({ usd_rate: 4000, display_name: null });
+  const [activeId, setActiveIdState] = useState<string | null>(null);
+  const [version, setVersion] = useState(0);
+  const [txDraft, setTxDraft] = useState<Partial<Tx> | null | undefined>(undefined);
+
+  // --- sesión ---
+  useEffect(() => {
+    const client = sb();
+    client.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthChecked(true);
+    });
+    const { data: sub } = client.auth.onAuthStateChange((_e, s) => setSession(s));
+    try {
+      const saved = localStorage.getItem(ACTIVE_KEY);
+      if (saved) setActiveIdState(saved === "global" ? null : saved);
+    } catch {}
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const setActiveId = useCallback((id: string | null) => {
+    setActiveIdState(id);
+    try { localStorage.setItem(ACTIVE_KEY, id ?? "global"); } catch {}
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const c = sb();
+    const [b, cat, a, bal, st] = await Promise.all([
+      c.from("businesses").select("*").order("sort").order("created_at"),
+      c.from("categories").select("*").order("sort").order("created_at"),
+      c.from("accounts").select("*").order("sort").order("created_at"),
+      c.from("account_balances").select("*"),
+      c.from("settings").select("*").maybeSingle(),
+    ]);
+    const err = b.error || cat.error || a.error || bal.error || st.error;
+    if (err) throw err;
+    const num = <T,>(rows: T[], keys: (keyof T)[]) =>
+      rows.map((r) => { const o = { ...r }; keys.forEach((k) => { if (o[k] != null) (o[k] as unknown) = Number(o[k]); }); return o; });
+    setBiz(num(b.data as Business[], ["partner_share"]));
+    setCats(cat.data as Category[]);
+    setAccs(num(a.data as Account[], ["initial_balance", "min_balance"]));
+    const map: Record<string, number> = {};
+    (bal.data as { account_id: string; balance: number }[]).forEach((r) => (map[r.account_id] = Number(r.balance)));
+    setBalances(map);
+    if (st.data) setSettings({ usd_rate: Number(st.data.usd_rate), display_name: st.data.display_name });
+  }, []);
+
+  // --- carga inicial (y crea negocios por defecto la primera vez) ---
+  useEffect(() => {
+    if (!session) { setLoaded(false); return; }
+    let cancel = false;
+    (async () => {
+      try {
+        const { count } = await sb().from("businesses").select("id", { count: "exact", head: true });
+        if (!count) await sb().rpc("jh_seed");
+        await refresh();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (!cancel) setLoaded(true);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [session, refresh]);
+
+  const bump = useCallback(() => {
+    setVersion((v) => v + 1);
+    refresh().catch(console.error);
+  }, [refresh]);
+
+  const businesses = useMemo(() => allBusinesses.filter((b) => !b.archived), [allBusinesses]);
+  const accounts = useMemo(() => allAccounts.filter((a) => !a.archived), [allAccounts]);
+
+  // si el negocio activo ya no existe, volver a Global
+  useEffect(() => {
+    if (loaded && activeId && !businesses.find((b) => b.id === activeId)) setActiveId(null);
+  }, [loaded, activeId, businesses, setActiveId]);
+
+  const value = useMemo<Data>(() => {
+    const bMap = new Map(allBusinesses.map((b) => [b.id, b]));
+    const aMap = new Map(allAccounts.map((a) => [a.id, a]));
+    const cMap = new Map(categories.map((c) => [c.id, c]));
+    return {
+      session,
+      ready: authChecked && (!session || loaded),
+      businesses,
+      allBusinesses,
+      categories,
+      accounts,
+      allAccounts,
+      balances,
+      settings,
+      activeId,
+      setActiveId,
+      active: activeId ? bMap.get(activeId) ?? null : null,
+      version,
+      refresh,
+      bump,
+      toCOP: (amount, cur) => (cur === "USD" ? Math.round(amount * settings.usd_rate) : amount),
+      bizById: (id) => (id ? bMap.get(id) : undefined),
+      accById: (id) => (id ? aMap.get(id) : undefined),
+      catById: (id) => (id ? cMap.get(id) : undefined),
+      openTx: (tx) => setTxDraft(tx ?? null),
+      txDraft,
+      closeTx: () => setTxDraft(undefined),
+    };
+  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, balances, settings, activeId, setActiveId, version, refresh, bump, txDraft]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+// ------------------------------------------------------------------
+//  Consulta de movimientos
+// ------------------------------------------------------------------
+export interface TxQuery {
+  from?: string;
+  to?: string;
+  businessId?: string | null; // incluye movimientos del negocio y de sus cuentas
+  limit?: number;
+  status?: "confirmed" | "pending";
+}
+
+export function normalizeTx(r: Tx): Tx {
+  return {
+    ...r,
+    amount: Number(r.amount),
+    amount_cop: Number(r.amount_cop),
+    to_amount: r.to_amount == null ? null : Number(r.to_amount),
+    fx_rate: r.fx_rate == null ? null : Number(r.fx_rate),
+  };
+}
+
+export function useTxs(q: TxQuery) {
+  const { version, accounts, session } = useData();
+  const [data, setData] = useState<Tx[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const bizAccIds = useMemo(
+    () => (q.businessId ? accounts.filter((a) => a.business_id === q.businessId).map((a) => a.id) : []),
+    [accounts, q.businessId]
+  );
+  const key = JSON.stringify([q, bizAccIds, version]);
+
+  useEffect(() => {
+    if (!session) return;
+    let cancel = false;
+    setLoading(true);
+    let query = sb().from("transactions").select("*").eq("status", q.status ?? "confirmed");
+    if (q.from) query = query.gte("date", q.from);
+    if (q.to) query = query.lte("date", q.to);
+    if (q.businessId) {
+      const parts = [`business_id.eq.${q.businessId}`];
+      if (bizAccIds.length) {
+        parts.push(`account_id.in.(${bizAccIds.join(",")})`, `to_account_id.in.(${bizAccIds.join(",")})`);
+      }
+      query = query.or(parts.join(","));
+    }
+    query = query.order("date", { ascending: false }).order("created_at", { ascending: false }).limit(q.limit ?? 2000);
+    query.then(({ data, error }) => {
+      if (cancel) return;
+      if (error) setError(error.message);
+      else { setError(null); setData((data as Tx[]).map(normalizeTx)); }
+      setLoading(false);
+    });
+    return () => { cancel = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, session]);
+
+  return { data, loading, error };
+}
