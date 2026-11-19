@@ -18,7 +18,7 @@ export function Shell({ children }: { children: ReactNode }) {
 }
 
 function Gate({ children }: { children: ReactNode }) {
-  const { session, ready, needsDbUpdate } = useData();
+  const { session, ready, needsDbUpdate, needsRecurringUpdate } = useData();
   if (!ready) {
     return (
       <div className="center-screen" style={{ alignItems: "center" }}>
@@ -30,7 +30,7 @@ function Gate({ children }: { children: ReactNode }) {
   if (!session) return <Login />;
   return (
     <div className="app">
-      {needsDbUpdate && <DbUpdateBanner />}
+      {(needsDbUpdate || needsRecurringUpdate) && <DbUpdateBanner files={[needsDbUpdate && "02-deudas-y-apariencia.sql", needsRecurringUpdate && "03-pagos-fijos.sql"].filter(Boolean) as string[]} />}
       {children}
       <TabBar />
       <TxForm />
@@ -87,12 +87,12 @@ function NotConfigured() {
   );
 }
 
-function DbUpdateBanner() {
+function DbUpdateBanner({ files }: { files: string[] }) {
   return (
     <div className="alert" style={{ margin: "calc(var(--safe-top) + 8px) 16px 0", borderRadius: 14 }}>
       <span>
-        <b>Falta una actualización de la base de datos.</b> En Supabase → SQL Editor, pega y corre el archivo
-        <b> 02-deudas-y-apariencia.sql</b> para activar Deudas y colores.
+        <b>Falta actualizar la base de datos.</b> En Supabase → SQL Editor, pega y corre {files.length > 1 ? "en orden los archivos" : "el archivo"}{" "}
+        <b>{files.join(" y ")}</b>.
       </span>
     </div>
   );

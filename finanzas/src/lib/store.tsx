@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { sb } from "./supabase";
-import { DEFAULT_DEBT_CATEGORIES, type Account, type Business, type Category, type Currency, type Debt, type Settings, type Tx } from "./types";
+import { DEFAULT_DEBT_CATEGORIES, type Account, type Business, type Category, type Currency, type Debt, type Recurring, type Settings, type Tx } from "./types";
 import { applySavedTheme, applyTheme, DEFAULT_THEME } from "./theme";
 
 interface Data {
@@ -21,6 +21,11 @@ interface Data {
   allDebts: Debt[];
   /** true si falta correr la actualización 02 en Supabase */
   needsDbUpdate: boolean;
+  /** pagos fijos activos y los pagos hechos este mes (id del pago fijo → movimiento) */
+  recurring: Recurring[];
+  allRecurring: Recurring[];
+  recurringPaid: Record<string, Tx>;
+  needsRecurringUpdate: boolean;
   /** Negocio activo ("espacio"). null = Global */
   activeId: string | null;
   setActiveId: (id: string | null) => void;
@@ -59,6 +64,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>({ usd_rate: 4000, display_name: null, theme_color: DEFAULT_THEME, debt_categories: DEFAULT_DEBT_CATEGORIES });
   const [allDebts, setDebts] = useState<Debt[]>([]);
   const [needsDbUpdate, setNeedsDbUpdate] = useState(false);
+  const [allRecurring, setRecurring] = useState<Recurring[]>([]);
+  const [recurringPaid, setRecurringPaid] = useState<Record<string, Tx>>({});
+  const [needsRecurringUpdate, setNeedsRecurringUpdate] = useState(false);
   const [activeId, setActiveIdState] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [txDraft, setTxDraft] = useState<Partial<Tx> | null | undefined>(undefined);
@@ -86,7 +94,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     const c = sb();
-    const [b, cat, a, bal, st, dbt, dbal] = await Promise.all([
+    const now = new Date();
+    const mFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const [b, cat, a, bal, st, dbt, dbal, rec, recTx] = await Promise.all([
       c.from("businesses").select("*").order("sort").order("created_at"),
       c.from("categories").select("*").order("sort").order("created_at"),
       c.from("accounts").select("*").order("sort").order("created_at"),
@@ -94,6 +104,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       c.from("settings").select("*").maybeSingle(),
       c.from("debts").select("*").order("created_at"),
       c.from("debt_balances").select("*"),
+      c.from("recurring_payments").select("*").order("day_of_month").order("sort"),
+      c.from("transactions").select("*").not("recurring_id", "is", null).gte("date", mFrom).order("date", { ascending: false }),
     ]);
     const err = b.error || cat.error || a.error || bal.error || st.error;
     if (err) throw err;
@@ -114,6 +126,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       };
       setSettings(next);
       applyTheme(next.theme_color);
+    }
+    // Pagos fijos (actualización 03)
+    if (rec.error || recTx.error) {
+      setNeedsRecurringUpdate(true);
+      setRecurring([]);
+      setRecurringPaid({});
+    } else {
+      setNeedsRecurringUpdate(false);
+      setRecurring((rec.data as Recurring[]).map((r) => ({ ...r, amount: Number(r.amount) })));
+      const paid: Record<string, Tx> = {};
+      (recTx.data as Tx[]).map(normalizeTx).forEach((t) => { if (t.recurring_id && !paid[t.recurring_id]) paid[t.recurring_id] = t; });
+      setRecurringPaid(paid);
     }
     // Deudas (si la actualización 02 no se ha corrido, la app sigue funcionando sin esta parte)
     if (dbt.error || dbal.error) {
@@ -158,6 +182,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const businesses = useMemo(() => allBusinesses.filter((b) => !b.archived), [allBusinesses]);
   const accounts = useMemo(() => allAccounts.filter((a) => !a.archived), [allAccounts]);
   const debts = useMemo(() => allDebts.filter((d) => !d.archived), [allDebts]);
+  const recurring = useMemo(() => allRecurring.filter((r) => r.active), [allRecurring]);
 
   // si el negocio activo ya no existe, volver a Global
   useEffect(() => {
@@ -181,6 +206,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       debts,
       allDebts,
       needsDbUpdate,
+      recurring,
+      allRecurring,
+      recurringPaid,
+      needsRecurringUpdate,
       activeId,
       setActiveId,
       active: activeId ? bMap.get(activeId) ?? null : null,
@@ -195,7 +224,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       txDraft,
       closeTx: () => setTxDraft(undefined),
     };
-  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, balances, settings, debts, allDebts, needsDbUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
+  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, balances, settings, debts, allDebts, needsDbUpdate, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -219,6 +248,7 @@ export function normalizeTx(r: Tx): Tx {
     to_amount: r.to_amount == null ? null : Number(r.to_amount),
     debt_id: r.debt_id ?? null,
     debt_role: r.debt_role ?? null,
+    recurring_id: r.recurring_id ?? null,
     fx_rate: r.fx_rate == null ? null : Number(r.fx_rate),
   };
 }

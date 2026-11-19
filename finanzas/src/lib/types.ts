@@ -55,6 +55,21 @@ export interface Tx {
   created_at: string;
   debt_id?: string | null;
   debt_role?: "disbursement" | "payment" | null;
+  recurring_id?: string | null;
+}
+
+export interface Recurring {
+  id: string;
+  name: string;
+  kind: CatKind;
+  amount: number;
+  business_id: string;
+  category_id: string | null;
+  account_id: string | null;
+  day_of_month: number;
+  note: string | null;
+  active: boolean;
+  sort: number;
 }
 
 export type DebtDirection = "owe" | "owed"; // owe = yo debo · owed = me deben

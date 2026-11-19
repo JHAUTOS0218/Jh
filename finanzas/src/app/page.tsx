@@ -8,13 +8,15 @@ import { summarize } from "@/lib/stats";
 import { BizDot } from "@/components/Business";
 import { TopBar } from "@/components/TopBar";
 import { daysUntilDue, nextDueText } from "@/components/Debts";
+import { RecurringRow, recurringStatus, useRecurringSheets } from "@/components/Recurring";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
 import { AccountIcon } from "@/components/AccountIcon";
 import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus } from "@/components/Icons";
 
 export default function Home() {
-  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts } = useData();
+  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid } = useData();
+  const { sheets: recSheets, edit: editRec, pay: payRec } = useRecurringSheets();
   const now = currentYM();
   const from = monthRange(addMonths(now, -5)).from;
   const { data: txs, loading } = useTxs({ from, businessId: activeId });
@@ -42,7 +44,21 @@ export default function Home() {
   const owedTotal = myDebts.filter((d) => d.direction === "owed").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
   const oweTotal = myDebts.filter((d) => d.direction === "owe").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
   const dueSoon = myDebts.filter((d) => d.due_day && daysUntilDue(d.due_day) <= 5).sort((a, b) => daysUntilDue(a.due_day!) - daysUntilDue(b.due_day!));
+  const dueGroups = Object.values(
+    dueSoon.reduce<Record<string, { key: string; first: (typeof dueSoon)[number]; installment: number }>>((acc, d) => {
+      const key = `${d.direction}|${d.person.trim().toLowerCase()}|${d.due_day}`;
+      acc[key] ??= { key, first: d, installment: 0 };
+      acc[key].installment += toCOP(Math.min(d.installment ?? d.remaining, d.remaining), d.currency);
+      return acc;
+    }, {})
+  );
   const firstName = (settings.display_name || "").trim().split(/\s+/)[0];
+
+  const recPending = recurring
+    .filter((r) => !recurringPaid[r.id] && (!activeId || r.business_id === activeId))
+    .map((r) => ({ r, st: recurringStatus(r) }))
+    .sort((a, b) => a.st.days - b.st.days);
+  const recUrgent = recPending.filter((x) => x.st.days <= 3);
 
   const lowAccounts = myAccounts.filter((a) => a.min_balance != null && (balances[a.id] ?? 0) < a.min_balance);
 
@@ -107,16 +123,28 @@ export default function Home() {
         </Link>
       )}
 
-      {dueSoon.length > 0 && (
+      {dueGroups.length > 0 && (
         <div style={{ marginTop: 12 }}>
-          {dueSoon.map((d) => (
-            <Link key={d.id} href={`/deudas?id=${d.id}`} className={"alert" + (d.direction === "owe" ? " danger" : "")} style={{ display: "flex" }}>
+          {dueGroups.map((g) => (
+            <Link key={g.key} href={`/deudas?id=${g.first.id}`} className={"alert" + (g.first.direction === "owe" ? " danger" : "")} style={{ display: "flex" }}>
               <IAlert size={18} />
               <span>
-                {d.direction === "owe" ? <>Pago a <b>{d.person}</b></> : <><b>{d.person}</b> te debe pagar</>} {nextDueText(d)}
-                {d.installment ? <> · cuota {money(d.installment, d.currency)}</> : null}
+                <b>{g.first.direction === "owe" ? `Pago a ${g.first.person}` : `Cobro a ${g.first.person}`}</b>: {nextDueText(g.first)}
+                {g.installment > 0 ? <> · {money(g.installment)}</> : null}
               </span>
             </Link>
+          ))}
+        </div>
+      )}
+
+      {recUrgent.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          {recUrgent.map(({ r, st }) => (
+            <button key={r.id} className={"alert" + (st.days < 0 ? " danger" : "")} style={{ display: "flex", width: "100%", textAlign: "left" }} onClick={() => payRec(r)}>
+              <IAlert size={18} />
+              <span style={{ flex: 1 }}><b>{r.name}</b>: {st.label.toLowerCase()} · {money(r.amount)}</span>
+              <b style={{ flex: "none" }}>{r.kind === "income" ? "Recibí" : "Pagar"}</b>
+            </button>
           ))}
         </div>
       )}
@@ -180,6 +208,15 @@ export default function Home() {
         </>
       )}
 
+      {recPending.length > 0 && (
+        <>
+          <h3 className="h-section">Próximos pagos <Link href="/mas/pagos-fijos">Ver todos</Link></h3>
+          <div className="list">
+            {recPending.slice(0, 4).map(({ r }) => <RecurringRow key={r.id} r={r} onOpen={() => editRec(r)} onPay={() => payRec(r)} />)}
+          </div>
+        </>
+      )}
+
       {myAccounts.length > 0 && (
         <>
           <h3 className="h-section">Cuentas <Link href="/mas/cuentas">Ver todas</Link></h3>
@@ -225,6 +262,7 @@ export default function Home() {
           )}
         </>
       )}
+      {recSheets}
     </main>
   );
 }

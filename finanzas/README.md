@@ -4,8 +4,10 @@ PWA de finanzas personales y de negocios (JH Autos, JH Bikes, Oro, Personal).
 Next.js + Supabase + Vercel. Guía de instalación en español: **[GUIA.md](./GUIA.md)**.
 
 ## Estructura
+- `supabase/00-instalar-todo.sql` — instalación nueva en un solo paso (01 + 02 + 03).
 - `supabase/01-fase1.sql` — esquema (tablas, seguridad RLS, saldos, conversión USD, datos iniciales).
 - `supabase/02-deudas-y-apariencia.sql` — deudas/cuentas por cobrar, movimientos `debt_in`/`debt_out` (no son ingreso ni gasto), color de la app.
+- `supabase/03-pagos-fijos.sql` — pagos fijos mensuales; `transactions.recurring_id` marca el pago del mes.
 - `src/lib/` — formato de pesos/fechas, conexión a Supabase, estado global, estadísticas, CSV.
 - `src/components/` — barra inferior, hojas, filas deslizables, formulario de movimientos, gráficas.
 - `src/app/` — pantallas: Inicio, Movimientos, Estadísticas, Más (Cuentas, Negocios, Cuadre).

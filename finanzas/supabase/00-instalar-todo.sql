@@ -1,0 +1,390 @@
+-- =====================================================================
+--  JH FINANZAS · INSTALACIÓN COMPLETA (todo en uno)
+--  Para una instalación nueva: Supabase → SQL Editor → New query → pegar TODO → Run.
+--  Incluye 01-fase1 + 02-deudas-y-apariencia + 03-pagos-fijos. Se puede correr varias veces.
+-- =====================================================================
+
+
+-- =====================================================================
+--  JH FINANZAS · FASE 1
+--  Negocios, categorías, cuentas, movimientos y ajustes.
+--  Cómo usarlo: Supabase → SQL Editor → New query → pegar TODO → Run.
+--  Se puede correr más de una vez sin dañar nada.
+-- =====================================================================
+
+create extension if not exists pgcrypto;
+
+-- ---------- Ajustes del usuario (tasa del dólar, nombre) ----------
+create table if not exists public.settings (
+  user_id     uuid primary key default auth.uid() references auth.users on delete cascade,
+  usd_rate    numeric(12,2) not null default 4000,   -- pesos por 1 dólar
+  display_name text,
+  created_at  timestamptz not null default now()
+);
+
+-- ---------- Negocios ("espacios") ----------
+create table if not exists public.businesses (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null default auth.uid() references auth.users on delete cascade,
+  name          text not null,
+  color         text not null default '#1E5B5A',
+  partner_name  text,
+  partner_share numeric(5,2) not null default 0 check (partner_share between 0 and 100), -- % de la utilidad para el socio
+  sort          int not null default 0,
+  archived      boolean not null default false,
+  created_at    timestamptz not null default now()
+);
+
+-- ---------- Categorías (cada una pertenece a un negocio) ----------
+create table if not exists public.categories (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  business_id uuid not null references public.businesses on delete cascade,
+  kind        text not null check (kind in ('income','expense')),
+  name        text not null,
+  special     text,          -- 'partner_payout' = pago de utilidad al socio
+  sort        int not null default 0,
+  archived    boolean not null default false,
+  created_at  timestamptz not null default now()
+);
+
+-- ---------- Cuentas: DÓNDE está la plata ----------
+create table if not exists public.accounts (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null default auth.uid() references auth.users on delete cascade,
+  business_id     uuid not null references public.businesses on delete restrict,
+  name            text not null,
+  type            text not null default 'bank' check (type in ('bank','pocket','cash','card','other')),
+  bank            text,                       -- ej. "Bancolombia 2"
+  currency        text not null default 'COP' check (currency in ('COP','USD')),
+  initial_balance numeric(16,2) not null default 0,
+  min_balance     numeric(16,2),              -- alerta si el saldo baja de aquí
+  sort            int not null default 0,
+  archived        boolean not null default false,
+  created_at      timestamptz not null default now()
+);
+
+-- ---------- Movimientos ----------
+--  kind = expense | income | transfer
+--  account_id     → cuenta de donde sale / a donde entra la plata (mueve saldos)
+--  business_id    → negocio al que pertenece el ingreso/gasto (mueve utilidades)
+--  amount         → en la moneda de la cuenta
+--  amount_cop     → equivalente en pesos (lo calcula la base de datos)
+--  status pending → bandeja "Por clasificar" (Fase 3); no afecta saldos ni utilidad
+create table if not exists public.transactions (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null default auth.uid() references auth.users on delete cascade,
+  kind          text not null check (kind in ('expense','income','transfer')),
+  date          date not null default current_date,
+  amount        numeric(16,2) not null check (amount > 0),
+  account_id    uuid references public.accounts on delete restrict,
+  to_account_id uuid references public.accounts on delete restrict,
+  to_amount     numeric(16,2) check (to_amount is null or to_amount > 0),
+  business_id   uuid references public.businesses on delete set null,
+  category_id   uuid references public.categories on delete set null,
+  description   text,
+  note          text,
+  fx_rate       numeric(12,2),
+  amount_cop    numeric(16,2),
+  status        text not null default 'confirmed' check (status in ('confirmed','pending')),
+  source        text not null default 'manual',
+  raw_text      text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  constraint tx_account_required check (status = 'pending' or account_id is not null),
+  constraint tx_transfer_target check (kind <> 'transfer' or status = 'pending' or (to_account_id is not null and to_account_id <> account_id))
+);
+
+create index if not exists transactions_user_date_idx on public.transactions (user_id, date desc);
+create index if not exists transactions_account_idx   on public.transactions (account_id);
+create index if not exists transactions_to_account_idx on public.transactions (to_account_id);
+create index if not exists transactions_business_idx  on public.transactions (business_id, date);
+
+-- ---------- Regla: calcula pesos, tasa del dólar y valida cuentas ----------
+create or replace function public.jh_tx_before_save() returns trigger
+language plpgsql security invoker set search_path = public as $$
+declare
+  cur  text;
+  cur2 text;
+  rate numeric;
+begin
+  new.updated_at := now();
+
+  if new.account_id is not null then
+    select currency into cur from accounts where id = new.account_id and user_id = new.user_id;
+    if cur is null then raise exception 'Cuenta no encontrada'; end if;
+  end if;
+
+  if new.to_account_id is not null then
+    select currency into cur2 from accounts where id = new.to_account_id and user_id = new.user_id;
+    if cur2 is null then raise exception 'Cuenta destino no encontrada'; end if;
+    if cur2 = coalesce(cur, 'COP') then
+      new.to_amount := new.amount;        -- misma moneda: llega lo mismo que sale
+    elsif new.to_amount is null then
+      raise exception 'Indica cuánto llegó a la cuenta destino';
+    end if;
+  end if;
+
+  if new.kind <> 'transfer' then
+    new.to_account_id := null;
+    new.to_amount := null;
+  else
+    new.category_id := null;
+  end if;
+
+  if coalesce(cur, 'COP') = 'USD' then
+    if new.fx_rate is null then
+      select usd_rate into rate from settings where user_id = new.user_id;
+      new.fx_rate := coalesce(rate, 4000);
+    end if;
+    new.amount_cop := round(new.amount * new.fx_rate);
+  else
+    new.fx_rate := null;
+    new.amount_cop := new.amount;
+  end if;
+
+  return new;
+end $$;
+
+drop trigger if exists jh_tx_before_save on public.transactions;
+create trigger jh_tx_before_save before insert or update on public.transactions
+  for each row execute function public.jh_tx_before_save();
+
+-- ---------- Vista: saldo actual de cada cuenta ----------
+create or replace view public.account_balances with (security_invoker = true) as
+select
+  a.id as account_id,
+  a.initial_balance
+  + coalesce((select sum(case when t.kind = 'income' then t.amount else -t.amount end)
+                from transactions t
+               where t.account_id = a.id and t.status = 'confirmed'), 0)
+  + coalesce((select sum(t.to_amount)
+                from transactions t
+               where t.to_account_id = a.id and t.kind = 'transfer' and t.status = 'confirmed'), 0)
+  as balance
+from accounts a;
+
+-- ---------- Seguridad: cada quien ve solo lo suyo ----------
+alter table public.settings     enable row level security;
+alter table public.businesses   enable row level security;
+alter table public.categories   enable row level security;
+alter table public.accounts     enable row level security;
+alter table public.transactions enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['settings','businesses','categories','accounts','transactions'] loop
+    execute format('drop policy if exists "solo_dueno" on public.%I', t);
+    execute format('create policy "solo_dueno" on public.%I for all to authenticated
+                      using (user_id = (select auth.uid()))
+                      with check (user_id = (select auth.uid()))', t);
+    execute format('revoke all on public.%I from anon', t);
+  end loop;
+end $$;
+revoke all on public.account_balances from anon;
+
+-- ---------- Datos iniciales: 4 negocios + categorías sugeridas ----------
+create or replace function public.jh_seed() returns void
+language plpgsql security invoker set search_path = public as $$
+declare
+  uid uuid := auth.uid();
+  b   uuid;
+begin
+  if uid is null then raise exception 'Debes iniciar sesión'; end if;
+  insert into settings (user_id) values (uid) on conflict (user_id) do nothing;
+  if exists (select 1 from businesses where user_id = uid) then return; end if;
+
+  -- JH AUTOS
+  insert into businesses (user_id, name, color, sort) values (uid, 'JH Autos', '#1E5B5A', 1) returning id into b;
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'income', n, o from unnest(array['Venta de vehículo','Comisión por consignación','Trámites y documentos','Cambio de divisas','Otros']) with ordinality as x(n, o);
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'expense', n, o from unnest(array['Compra de vehículo','Meta Ads y publicidad','Comisiones pagadas','Alistamiento y taller','Traspasos y trámites','Atención a clientes','Equipos','Oficina','Plan de datos y suscripciones','Otros']) with ordinality as x(n, o);
+
+  -- PERSONAL
+  insert into businesses (user_id, name, color, sort) values (uid, 'Personal', '#6E7B3C', 2) returning id into b;
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'income', n, o from unnest(array['Ingresos extra','Otros']) with ordinality as x(n, o);
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'expense', n, o from unnest(array['Vivienda y administración','Servicios (luz, agua, gas, internet)','Mercado','Comida y domicilios','Gasolina y transporte','Moto y carro','Suscripciones','Cuotas y tarjetas','Salud','Ropa','Salidas','Aseo','Familia','Otros']) with ordinality as x(n, o);
+
+  -- JH BIKES (socio 40 %)
+  insert into businesses (user_id, name, color, partner_name, partner_share, sort) values (uid, 'JH Bikes', '#2F7F86', 'Socio', 40, 3) returning id into b;
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'income', n, o from unnest(array['Venta de moto','Otros']) with ordinality as x(n, o);
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'expense', n, o from unnest(array['Compra de moto','Mantenimiento y repuestos','Peritajes','Traspasos y trámites','Publicidad','Plan de datos','Utilidad socio','Otros']) with ordinality as x(n, o);
+  update categories set special = 'partner_payout' where business_id = b and name = 'Utilidad socio';
+
+  -- ORO
+  insert into businesses (user_id, name, color, sort) values (uid, 'Oro', '#A88A3D', 4) returning id into b;
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'income', n, o from unnest(array['Venta de oro','Otros']) with ordinality as x(n, o);
+  insert into categories (user_id, business_id, kind, name, sort)
+    select uid, b, 'expense', n, o from unnest(array['Compra de oro','Comisiones','Transporte y envíos','Otros']) with ordinality as x(n, o);
+end $$;
+
+revoke all on function public.jh_seed() from anon, public;
+grant execute on function public.jh_seed() to authenticated;
+
+
+-- =====================================================================
+--  JH FINANZAS · ACTUALIZACIÓN 2
+--  Deudas y cuentas por cobrar + colores de la app + nombre.
+--  Cómo usarlo: Supabase → SQL Editor → New query → pegar TODO → Run.
+--  (Requiere haber corrido antes 01-fase1.sql). Se puede correr varias veces.
+-- =====================================================================
+
+-- ---------- Ajustes: color de la app y categorías de deudas ----------
+alter table public.settings add column if not exists theme_color text not null default '#1E5B5A';
+alter table public.settings add column if not exists debt_categories text[] not null
+  default array['Préstamo','Venta a crédito','Proveedor','Tarjeta o crédito bancario','Arriendo','Otro'];
+
+-- ---------- Deudas: lo que debo (owe) y lo que me deben (owed) ----------
+create table if not exists public.debts (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null default auth.uid() references auth.users on delete cascade,
+  direction    text not null check (direction in ('owe','owed')),  -- owe = yo debo · owed = me deben
+  person       text not null,                                     -- a quién le debo / quién me debe
+  description  text,
+  category     text,
+  business_id  uuid not null references public.businesses on delete restrict,
+  currency     text not null default 'COP' check (currency in ('COP','USD')),
+  total_amount numeric(16,2) not null check (total_amount > 0),
+  installment  numeric(16,2),                                     -- cuota
+  due_day      int check (due_day between 1 and 31),              -- día de pago de cada mes
+  start_date   date not null default current_date,
+  note         text,
+  archived     boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+create index if not exists debts_user_idx on public.debts (user_id, direction);
+
+-- ---------- Movimientos ligados a deudas ----------
+--  debt_in  = entra plata a una cuenta (me pagan, o recibo un préstamo)  → NO es ingreso
+--  debt_out = sale plata de una cuenta (pago una deuda, o presto plata) → NO es gasto
+alter table public.transactions drop constraint if exists transactions_kind_check;
+alter table public.transactions add constraint transactions_kind_check
+  check (kind in ('expense','income','transfer','debt_in','debt_out'));
+alter table public.transactions add column if not exists debt_id uuid references public.debts on delete set null;
+alter table public.transactions add column if not exists debt_role text check (debt_role in ('disbursement','payment'));
+create index if not exists transactions_debt_idx on public.transactions (debt_id);
+
+-- Regla de guardado actualizada (las deudas no llevan categoría de gasto/ingreso)
+create or replace function public.jh_tx_before_save() returns trigger
+language plpgsql security invoker set search_path = public as $$
+declare
+  cur  text;
+  cur2 text;
+  rate numeric;
+begin
+  new.updated_at := now();
+
+  if new.account_id is not null then
+    select currency into cur from accounts where id = new.account_id and user_id = new.user_id;
+    if cur is null then raise exception 'Cuenta no encontrada'; end if;
+  end if;
+
+  if new.to_account_id is not null then
+    select currency into cur2 from accounts where id = new.to_account_id and user_id = new.user_id;
+    if cur2 is null then raise exception 'Cuenta destino no encontrada'; end if;
+    if cur2 = coalesce(cur, 'COP') then
+      new.to_amount := new.amount;
+    elsif new.to_amount is null then
+      raise exception 'Indica cuánto llegó a la cuenta destino';
+    end if;
+  end if;
+
+  if new.kind <> 'transfer' then
+    new.to_account_id := null;
+    new.to_amount := null;
+  end if;
+  if new.kind not in ('income','expense') then
+    new.category_id := null;
+  end if;
+  if new.kind not in ('debt_in','debt_out') then
+    new.debt_id := null;
+    new.debt_role := null;
+  end if;
+
+  if coalesce(cur, 'COP') = 'USD' then
+    if new.fx_rate is null then
+      select usd_rate into rate from settings where user_id = new.user_id;
+      new.fx_rate := coalesce(rate, 4000);
+    end if;
+    new.amount_cop := round(new.amount * new.fx_rate);
+  else
+    new.fx_rate := null;
+    new.amount_cop := new.amount;
+  end if;
+
+  return new;
+end $$;
+
+-- Saldos: ingresos y "entra plata por deuda" suman; lo demás resta
+create or replace view public.account_balances with (security_invoker = true) as
+select
+  a.id as account_id,
+  a.initial_balance
+  + coalesce((select sum(case when t.kind in ('income','debt_in') then t.amount else -t.amount end)
+                from transactions t
+               where t.account_id = a.id and t.status = 'confirmed'), 0)
+  + coalesce((select sum(t.to_amount)
+                from transactions t
+               where t.to_account_id = a.id and t.kind = 'transfer' and t.status = 'confirmed'), 0)
+  as balance
+from accounts a;
+
+-- Cuánto se ha pagado de cada deuda
+create or replace view public.debt_balances with (security_invoker = true) as
+select d.id as debt_id,
+       coalesce(sum(t.amount) filter (where t.debt_role = 'payment' and t.status = 'confirmed'), 0) as paid
+  from debts d
+  left join transactions t on t.debt_id = d.id
+ group by d.id;
+
+-- ---------- Seguridad ----------
+alter table public.debts enable row level security;
+drop policy if exists "solo_dueno" on public.debts;
+create policy "solo_dueno" on public.debts for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+revoke all on public.debts from anon;
+revoke all on public.debt_balances from anon;
+revoke all on public.account_balances from anon;
+
+
+-- =====================================================================
+--  JH FINANZAS · ACTUALIZACIÓN 3 · PAGOS FIJOS MENSUALES
+--  Arriendo, servicios, suscripciones, nómina… con recordatorio y
+--  botón "Marcar pagado" que crea el movimiento.
+--  Cómo usarlo: Supabase → SQL Editor → New query → pegar TODO → Run.
+--  (Requiere 01 y 02). Se puede correr varias veces.
+-- =====================================================================
+
+create table if not exists public.recurring_payments (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  name        text not null,                         -- ej. "Arriendo oficina"
+  kind        text not null default 'expense' check (kind in ('expense','income')),
+  amount      numeric(16,2) not null check (amount > 0),  -- valor de referencia (se puede cambiar al pagar)
+  business_id uuid not null references public.businesses on delete restrict,
+  category_id uuid references public.categories on delete set null,
+  account_id  uuid references public.accounts on delete set null,  -- cuenta con la que normalmente se paga
+  day_of_month int not null default 1 check (day_of_month between 1 and 31),
+  note        text,
+  active      boolean not null default true,
+  sort        int not null default 0,
+  created_at  timestamptz not null default now()
+);
+create index if not exists recurring_user_idx on public.recurring_payments (user_id);
+
+-- Cada pago queda ligado a su pago fijo (así se sabe si ya se pagó este mes)
+alter table public.transactions add column if not exists recurring_id uuid references public.recurring_payments on delete set null;
+create index if not exists transactions_recurring_idx on public.transactions (recurring_id, date);
+
+alter table public.recurring_payments enable row level security;
+drop policy if exists "solo_dueno" on public.recurring_payments;
+create policy "solo_dueno" on public.recurring_payments for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+revoke all on public.recurring_payments from anon;

@@ -1,6 +1,7 @@
 # JH Finanzas · Guía para ponerla en tu iPhone
 
-> **¿Ya la tenías instalada?** Salta a la sección **“Actualización 2: Deudas y colores”** al final.
+> **¿Ya la tenías instalada?** Salta a las secciones **“Actualización 2”** y **“Actualización 3”** al final.
+> **¿Es tu primera vez?** Sigue los pasos 1 a 5 y ya tendrás todo (no necesitas las actualizaciones).
 
 Tiempo aproximado: **30 a 40 minutos**, una sola vez. Todo se hace desde el navegador (computador o iPhone).
 No necesitas instalar programas.
@@ -35,11 +36,10 @@ La app está en la rama `claude/jh-finanzas-pwa-app-4vkrpv` (también trae el ma
    - **Region:** `South America (São Paulo)` (la más cercana a Colombia).
    - Clic en **Create new project** y espera 1–2 minutos.
 3. **Crear las tablas.** En el menú izquierdo, clic en **SQL Editor** → **New query**.
-   - Abre este archivo en otra pestaña: `finanzas/supabase/01-fase1.sql` en tu GitHub
-     (github.com/JHAUTOS0218/Jh → carpeta `finanzas` → `supabase` → `01-fase1.sql`).
+   - Abre este archivo en otra pestaña: **`finanzas/supabase/00-instalar-todo.sql`** en tu GitHub
+     (github.com/JHAUTOS0218/Jh → carpeta `finanzas` → `supabase` → `00-instalar-todo.sql`).
    - Clic en el ícono **Copy raw file** (dos cuadritos), vuelve a Supabase, pega todo y clic en **Run**.
-   - Debe decir **Success. No rows returned**. ✅
-   - Repite lo mismo con el archivo **`02-deudas-y-apariencia.sql`** (misma carpeta): New query → pegar → Run.
+   - Debe decir **Success. No rows returned**. ✅ (Ese único archivo ya trae todo: cuentas, deudas y pagos fijos.)
 4. **Crear tu usuario.** Menú izquierdo → **Authentication** → **Users** → **Add user** → **Create new user**:
    - Escribe tu correo y una contraseña fuerte.
    - Marca ✅ **Auto Confirm User** → **Create user**.
@@ -164,3 +164,23 @@ Esta versión trae: pestaña **Deudas** (lo que te deben y lo que debes, por per
 | Deudas: todo (persona, monto, cuota, día, negocio) | Toca la deuda → Editar |
 | Movimientos y abonos | Desliza a la izquierda → Editar / Borrar |
 | Tasa del dólar | Más → Tasa del dólar |
+| Pagos fijos: nombre, valor, día, cuenta, pausar | Tu inicial → Pagos fijos mensuales → toca el pago |
+
+---
+
+## Actualización 3: Pagos fijos (2 min)
+
+*(Solo si instalaste antes de esta versión. Si usaste `00-instalar-todo.sql`, ya lo tienes.)*
+
+1. Supabase → **SQL Editor** → **New query** → pega `finanzas/supabase/03-pagos-fijos.sql` → **Run**.
+2. Cierra y abre la app.
+
+### Prueba
+- [ ] Tu inicial → **Pagos fijos mensuales** → **+ Nuevo**: arriendo, internet, Netflix, plan de datos de JH Autos…
+      Pon valor, día del mes, negocio, categoría y la cuenta con la que pagas.
+- [ ] En **Inicio** aparece **Próximos pagos**, y un aviso cuando falten 3 días o menos (o si ya se venció).
+- [ ] Toca **Pagar** → confirma el valor (si este mes llegó distinto, cámbialo) → queda el gasto registrado,
+      el saldo de la cuenta baja y el pago pasa a **Pagados este mes**.
+- [ ] ¿Te equivocaste? Toca **✓ Pagado** → **Deshacer**.
+- [ ] Para pausar uno sin borrarlo: tócalo → desmarca **Activo**.
+- [ ] También sirve para cobros fijos (ej. un local que arriendas): elige **Cobro (ingreso)**.
