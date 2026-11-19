@@ -135,7 +135,7 @@ export interface Asset {
   sort: number;
 }
 
-export const ASSET_CATEGORIES = ["Vehículo", "Moto", "Oro y joyas", "Inventario", "Inmueble", "Otro"];
+export const ASSET_CATEGORIES = ["Vehículo", "Moto", "Prendas en oro", "Inventario", "Inmueble", "Otro"];
 
 export interface Settings {
   usd_rate: number;

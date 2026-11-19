@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { useData } from "@/lib/store";
 import { money } from "@/lib/format";
-import { ASSET_CATEGORIES, type Asset } from "@/lib/types";
+import type { Asset } from "@/lib/types";
+import { BizDot } from "@/components/Business";
 import { TopBar } from "@/components/TopBar";
 import { Sheet } from "@/components/ui";
 import { AssetForm, AssetRow, SellForm, mineOf, profitOf, saleOf } from "@/components/Assets";
 import { IPlus, ITarget } from "@/components/Icons";
 
 export default function AssetsPage() {
-  const { assets, allAssets, activeId, active } = useData();
+  const { assets, allAssets, activeId, active, businesses } = useData();
   const [editing, setEditing] = useState<Asset | "new" | null>(null);
   const [selling, setSelling] = useState<Asset | null>(null);
   const [showSold, setShowSold] = useState(false);
@@ -24,8 +25,9 @@ export default function AssetsPage() {
   const others = list.reduce((s, a) => s + (a.partner_amount ?? 0), 0);
   const mine = list.reduce((s, a) => s + mineOf(a), 0);
 
-  const groups = [...ASSET_CATEGORIES, ...new Set(list.map((a) => a.category).filter((c) => !ASSET_CATEGORIES.includes(c)))]
-    .map((cat) => ({ cat, items: list.filter((a) => a.category === cat) }))
+  // agrupados por negocio
+  const groups = businesses
+    .map((b) => ({ b, items: list.filter((a) => a.business_id === b.id) }))
     .filter((g) => g.items.length);
 
   return (
@@ -54,12 +56,15 @@ export default function AssetsPage() {
       )}
 
       {groups.map((g) => (
-        <div key={g.cat}>
+        <div key={g.b.id}>
           <h3 className="h-section">
-            {g.cat}
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}><BizDot name={g.b.name} color={g.b.color} size={18} />{g.b.name}</span>
             <span className="num" style={{ fontFamily: "var(--body)", letterSpacing: 0, fontSize: 13, color: "var(--ink)", fontWeight: 700 }}>{money(g.items.reduce((s, a) => s + saleOf(a), 0))}</span>
           </h3>
           <div className="list">{g.items.map((a) => <AssetRow key={a.id} a={a} onOpen={() => setEditing(a)} />)}</div>
+          <p className="muted xsmall num" style={{ margin: "6px 4px 0", textAlign: "right" }}>
+            Costo {money(g.items.reduce((s, a) => s + a.cost, 0))} · utilidad esperada {money(g.items.reduce((s, a) => s + profitOf(a), 0), "COP", { sign: true })}
+          </p>
         </div>
       ))}
 

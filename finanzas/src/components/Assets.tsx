@@ -10,6 +10,15 @@ import { AccountSheet } from "./TxForm";
 import { AccountIcon } from "./AccountIcon";
 import { IChevR } from "./Icons";
 
+/** tipo sugerido según el negocio */
+export function defaultCategory(businessName?: string) {
+  const n = (businessName ?? "").toLowerCase();
+  if (n.includes("oro")) return "Prendas en oro";
+  if (n.includes("bike") || n.includes("moto")) return "Moto";
+  if (n.includes("auto")) return "Vehículo";
+  return "Otro";
+}
+
 export const saleOf = (a: Asset) => a.sale_price ?? a.cost;
 export const profitOf = (a: Asset) => saleOf(a) - a.cost;
 /** lo que es tuyo de la venta (descontando la parte de otra persona) */
@@ -26,7 +35,7 @@ export function AssetRow({ a, onOpen }: { a: Asset; onOpen: () => void }) {
     <button className="row link" style={{ alignItems: "flex-start" }} onClick={onOpen}>
       <div className="main">
         <div className="t1">{a.name}</div>
-        <div className="t2">{[a.detail, b?.name, a.status === "sold" ? "vendido" : null].filter(Boolean).join(" · ")}</div>
+        <div className="t2">{[a.category, a.detail, a.status === "sold" ? "vendido" : null].filter(Boolean).join(" · ")}</div>
         <div className="xsmall muted num" style={{ marginTop: 4 }}>
           Costo {money(a.cost)} → Venta {money(saleOf(a))}
         </div>
@@ -48,8 +57,13 @@ export function AssetRow({ a, onOpen }: { a: Asset; onOpen: () => void }) {
 export function AssetForm({ asset, onDone, onSell }: { asset: Asset | null; onDone: () => void; onSell: () => void }) {
   const { businesses, activeId, allAssets, bump } = useData();
   const [name, setName] = useState(asset?.name ?? "");
-  const [category, setCategory] = useState(asset?.category ?? "Vehículo");
   const [businessId, setBusinessId] = useState(asset?.business_id ?? activeId ?? businesses[0]?.id);
+  const [category, setCategory] = useState(asset?.category ?? defaultCategory(businesses.find((b) => b.id === (asset?.business_id ?? activeId ?? businesses[0]?.id))?.name));
+  const [catTouched, setCatTouched] = useState(!!asset);
+  const pickBusiness = (id: string) => {
+    setBusinessId(id);
+    if (!catTouched) setCategory(defaultCategory(businesses.find((b) => b.id === id)?.name));
+  };
   const [cost, setCost] = useState(amountToInput(asset?.cost ?? 0));
   const [sale, setSale] = useState(amountToInput(asset?.sale_price ?? 0));
   const [detail, setDetail] = useState(asset?.detail ?? "");
@@ -108,13 +122,13 @@ export function AssetForm({ asset, onDone, onSell }: { asset: Asset | null; onDo
       <div className="field">
         <span className="lbl">Tipo</span>
         <div className="chips">
-          {ASSET_CATEGORIES.map((x) => <button key={x} type="button" className={"chip" + (category === x ? " on" : "")} onClick={() => setCategory(x)}>{x}</button>)}
+          {ASSET_CATEGORIES.map((x) => <button key={x} type="button" className={"chip" + (category === x ? " on" : "")} onClick={() => { setCategory(x); setCatTouched(true); }}>{x}</button>)}
         </div>
       </div>
       <div className="field">
         <span className="lbl">¿De qué negocio es?</span>
         <div className="chips scroll">
-          {businesses.map((b) => <button key={b.id} type="button" className={"chip" + (businessId === b.id ? " on" : "")} onClick={() => setBusinessId(b.id)}>{b.name}</button>)}
+          {businesses.map((b) => <button key={b.id} type="button" className={"chip" + (businessId === b.id ? " on" : "")} onClick={() => pickBusiness(b.id)}>{b.name}</button>)}
         </div>
       </div>
       <div className="grid2">
