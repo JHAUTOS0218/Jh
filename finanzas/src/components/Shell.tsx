@@ -2,14 +2,15 @@
 
 import { useState, type ReactNode } from "react";
 import { DataProvider, useData } from "@/lib/store";
-import { sb, supabaseConfigured, errorText } from "@/lib/supabase";
+import { sb, configProblem, errorText } from "@/lib/supabase";
 import { TabBar } from "./TabBar";
 import { TxForm } from "./TxForm";
 import { ToastHost } from "./ui";
 import { BrandMark } from "./BrandMark";
 
 export function Shell({ children }: { children: ReactNode }) {
-  if (!supabaseConfigured) return <NotConfigured />;
+  const problem = configProblem();
+  if (problem) return <NotConfigured problem={problem} />;
   return (
     <DataProvider>
       <Gate>{children}</Gate>
@@ -74,14 +75,15 @@ function Login() {
   );
 }
 
-function NotConfigured() {
+function NotConfigured({ problem }: { problem: string }) {
   return (
     <div className="center-screen">
       <div className="brand-wrap"><BrandMark /></div>
       <h1 className="title" style={{ fontSize: 18 }}>Falta un paso</h1>
+      <div className="alert danger" style={{ margin: "14px 0" }}><span>{problem}</span></div>
       <p className="muted">
-        La app todavía no está conectada a la base de datos. En Vercel, ve a <b>Settings → Environment Variables</b> y agrega
-        <b> NEXT_PUBLIC_SUPABASE_URL</b> y <b>NEXT_PUBLIC_SUPABASE_ANON_KEY</b>. Luego vuelve a publicar (Redeploy).
+        Corrígelo en Vercel → tu proyecto → <b>Settings → Environments → Production → Environment Variables</b>.
+        Luego ve a <b>Deployments</b> → ⋯ → <b>Redeploy</b>.
       </p>
     </div>
   );
