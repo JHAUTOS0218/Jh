@@ -34,6 +34,27 @@ export interface Account {
   min_balance: number | null;
   sort: number;
   archived: boolean;
+  // Tarjetas de crédito
+  credit_limit?: number | null;
+  overlimit_pct?: number | null;
+  cut_day?: number | null;
+  pay_day?: number | null;
+  card_fx_rate?: number | null;
+  /** si existe, esta cuenta es la parte en dólares de la tarjeta parent_id */
+  parent_id?: string | null;
+}
+
+/** Tarjeta de crédito con su deuda en pesos y (opcional) en dólares */
+export interface CardInfo {
+  card: Account;
+  usd?: Account;
+  debtCOP: number;        // deuda en pesos (positivo)
+  debtUSD: number;        // deuda en dólares (positivo)
+  rate: number;           // tasa usada para la parte en dólares
+  totalDebt: number;      // deuda total en pesos
+  limit: number;          // cupo
+  overlimit: number;      // sobrecupo en pesos
+  available: number;      // cupo - deuda (sin sobrecupo)
 }
 
 export interface Tx {

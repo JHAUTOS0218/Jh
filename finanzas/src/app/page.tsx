@@ -9,19 +9,21 @@ import { BizDot } from "@/components/Business";
 import { TopBar } from "@/components/TopBar";
 import { daysUntilDue, nextDueText } from "@/components/Debts";
 import { RecurringRow, recurringStatus, useRecurringSheets } from "@/components/Recurring";
+import { cardDueText } from "@/components/Cards";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
 import { AccountIcon } from "@/components/AccountIcon";
 import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus } from "@/components/Icons";
 
 export default function Home() {
-  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid } = useData();
+  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards } = useData();
   const { sheets: recSheets, edit: editRec, pay: payRec } = useRecurringSheets();
   const now = currentYM();
   const from = monthRange(addMonths(now, -5)).from;
   const { data: txs, loading } = useTxs({ from, businessId: activeId });
 
-  const myAccounts = accounts.filter((a) => !activeId || a.business_id === activeId);
+  const myAccounts = moneyAccounts.filter((a) => !activeId || a.business_id === activeId);
+  const myCards = cards.filter((c) => !activeId || c.card.business_id === activeId);
   const totalCOP = myAccounts.reduce((s, a) => s + toCOP(balances[a.id] ?? 0, a.currency), 0);
   const usdAccounts = myAccounts.filter((a) => a.currency === "USD");
   const usdTotal = usdAccounts.reduce((s, a) => s + (balances[a.id] ?? 0), 0);
@@ -42,7 +44,8 @@ export default function Home() {
 
   const myDebts = debts.filter((d) => d.remaining > 0 && (!activeId || d.business_id === activeId));
   const owedTotal = myDebts.filter((d) => d.direction === "owed").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
-  const oweTotal = myDebts.filter((d) => d.direction === "owe").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
+  const oweTotal = myDebts.filter((d) => d.direction === "owe").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0) + myCards.reduce((s, c) => s + c.totalDebt, 0);
+  const cardAlerts = myCards.filter((c) => (c.card.pay_day && c.totalDebt > 0 && daysUntilDue(c.card.pay_day) <= 5) || (c.limit > 0 && c.available < c.limit * 0.1));
   const dueSoon = myDebts.filter((d) => d.due_day && daysUntilDue(d.due_day) <= 5).sort((a, b) => daysUntilDue(a.due_day!) - daysUntilDue(b.due_day!));
   const dueGroups = Object.values(
     dueSoon.reduce<Record<string, { key: string; first: (typeof dueSoon)[number]; installment: number }>>((acc, d) => {
@@ -137,6 +140,20 @@ export default function Home() {
         </div>
       )}
 
+      {cardAlerts.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          {cardAlerts.map((c) => (
+            <Link key={c.card.id} href="/deudas" className={"alert" + (c.available < 0 ? " danger" : "")} style={{ display: "flex" }}>
+              <IAlert size={18} />
+              <span>
+                <b>{c.card.name}</b>:{" "}
+                {c.card.pay_day && c.totalDebt > 0 && daysUntilDue(c.card.pay_day) <= 5 ? <>{cardDueText(c.card.pay_day)} · debes {money(c.totalDebt)}</> : <>te quedan {money(c.available)} disponibles</>}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       {recUrgent.length > 0 && (
         <div style={{ marginTop: 12 }}>
           {recUrgent.map(({ r, st }) => (
@@ -176,7 +193,7 @@ export default function Home() {
           <h3 className="h-section">Negocios</h3>
           <div className="hscroll">
             {businesses.map((b) => {
-              const bal = accounts.filter((a) => a.business_id === b.id).reduce((s, a) => s + toCOP(balances[a.id] ?? 0, a.currency), 0);
+              const bal = moneyAccounts.filter((a) => a.business_id === b.id).reduce((s, a) => s + toCOP(balances[a.id] ?? 0, a.currency), 0);
               const s = summarize(monthTxs, b.id, catById, b);
               return (
                 <button key={b.id} className="biz-card" onClick={() => setActiveId(b.id)}>

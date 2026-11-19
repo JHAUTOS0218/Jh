@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useData } from "@/lib/store";
 import { sb, errorText } from "@/lib/supabase";
 import { amountToInput, formatTyping, money, parseAmount } from "@/lib/format";
@@ -27,13 +28,15 @@ function Accounts() {
     if (params.get("nueva")) { setEditing("new"); router.replace("/mas/cuentas"); }
   }, [params, router]);
 
-  const visible = allAccounts.filter((a) => showArchived || !a.archived);
-  const archivedCount = allAccounts.filter((a) => a.archived).length;
+  const visible = allAccounts.filter((a) => a.type !== "card" && (showArchived || !a.archived));
+  const archivedCount = allAccounts.filter((a) => a.archived && a.type !== "card").length;
 
   return (
     <main className="page">
       <BackBar title="Cuentas" right={<button className="btn small" onClick={() => setEditing("new")}><IPlus size={18} /> Nueva</button>} />
-      <p className="muted small" style={{ margin: "-6px 2px 8px" }}>Dónde está tu plata: cuentas, bolsillos, efectivo, tarjetas y dólares.</p>
+      <p className="muted small" style={{ margin: "-6px 2px 8px" }}>
+        Dónde está tu plata: cuentas, bolsillos, efectivo y dólares. Las tarjetas de crédito están en <Link href="/deudas" className="link-btn">Deudas</Link>.
+      </p>
 
       {!allAccounts.length && (
         <div className="empty">
@@ -173,7 +176,7 @@ function AccountForm({ account, onDone }: { account: Account | null; onDone: () 
       <div className="field">
         <span className="lbl">Tipo</span>
         <div className="chips">
-          {ACCOUNT_TYPES.map((t) => (
+          {ACCOUNT_TYPES.filter((t) => t.value !== "card" || type === "card").map((t) => (
             <button key={t.value} type="button" className={"chip" + (type === t.value ? " on" : "")} onClick={() => setType(t.value)}>{t.label}</button>
           ))}
         </div>

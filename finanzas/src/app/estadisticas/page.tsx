@@ -11,7 +11,7 @@ import { MonthNav, Seg } from "@/components/ui";
 import { AccountIcon } from "@/components/AccountIcon";
 
 export default function Stats() {
-  const { active, activeId, businesses, accounts, balances, catById } = useData();
+  const { active, activeId, businesses, moneyAccounts: accounts, balances, catById } = useData();
   const [ym, setYm] = useState<YM>(currentYM());
   const [catKind, setCatKind] = useState<"expense" | "income">("expense");
 

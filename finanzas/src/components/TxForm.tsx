@@ -29,7 +29,8 @@ function FormBody() {
 
   const defaultAcc =
     accById(txDraft?.account_id) ??
-    accounts.find((a) => a.business_id === activeId) ??
+    accounts.find((a) => a.business_id === activeId && a.type !== "card") ??
+    accounts.find((a) => a.type !== "card") ??
     accounts[0];
 
   const [kind, setKind] = useState<TxKind>(txDraft?.kind ?? "expense");

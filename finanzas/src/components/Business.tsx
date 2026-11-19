@@ -19,7 +19,7 @@ export const GLOBAL_COLOR = "#0f1a19";
 
 /** Pastilla de arriba para cambiar de negocio (equivalente a "Espacios" en Lukas) */
 export function BusinessSwitcher() {
-  const { active, businesses, accounts, balances, toCOP, setActiveId, activeId } = useData();
+  const { active, businesses, moneyAccounts: accounts, balances, toCOP, setActiveId, activeId } = useData();
   const [open, setOpen] = useState(false);
 
   const totalOf = (bid: string | null) =>

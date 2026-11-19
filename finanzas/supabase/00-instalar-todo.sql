@@ -212,6 +212,14 @@ end $$;
 revoke all on function public.jh_seed() from anon, public;
 grant execute on function public.jh_seed() to authenticated;
 
+-- Tarjetas de crédito (cupo, sobrecupo, corte, pago y parte en dólares)
+alter table public.accounts add column if not exists credit_limit numeric(16,2);
+alter table public.accounts add column if not exists overlimit_pct numeric(5,2) not null default 0;
+alter table public.accounts add column if not exists cut_day int check (cut_day between 1 and 31);
+alter table public.accounts add column if not exists pay_day int check (pay_day between 1 and 31);
+alter table public.accounts add column if not exists card_fx_rate numeric(12,2);
+alter table public.accounts add column if not exists parent_id uuid references public.accounts on delete cascade;
+
 -- Permisos para el usuario que inicia sesión (los proyectos nuevos de Supabase no los dan por defecto).
 -- La seguridad por fila (RLS) sigue limitando cada tabla a los datos de su dueño.
 grant usage on schema public to authenticated;

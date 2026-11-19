@@ -52,6 +52,7 @@ export function errorText(e: unknown): string {
   if (/Email not confirmed/i.test(msg)) return "Tu correo aún no está confirmado en Supabase.";
   if (/Invalid API key|No API key/i.test(msg)) return "La llave pública de Supabase no es válida. Revisa NEXT_PUBLIC_SUPABASE_ANON_KEY en Vercel.";
   if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) return "No se pudo conectar. Revisa tu internet o la dirección NEXT_PUBLIC_SUPABASE_URL en Vercel.";
+  if (/credit_limit|parent_id|cut_day|pay_day|overlimit_pct|card_fx_rate/i.test(msg)) return "Falta actualizar la base de datos: en Supabase → SQL Editor corre el archivo 05-tarjetas.sql.";
   if (/foreign key|violates foreign key/i.test(msg)) return "No se puede borrar porque tiene movimientos asociados.";
   return msg;
 }

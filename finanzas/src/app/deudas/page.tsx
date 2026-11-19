@@ -12,13 +12,14 @@ import { Seg, Sheet, initials } from "@/components/ui";
 import { DebtForm, DebtDetail, DebtCategoriesEditor, nextDueText } from "@/components/Debts";
 import { IPlus, IHandCoins, ITag } from "@/components/Icons";
 import { PALETTE } from "@/lib/stats";
+import { CardsSection } from "@/components/Cards";
 
 export default function Page() {
   return <Suspense><Debts /></Suspense>;
 }
 
 function Debts() {
-  const { debts, allDebts, active, activeId, businesses, toCOP, bizById, needsDbUpdate } = useData();
+  const { debts, allDebts, active, activeId, businesses, toCOP, bizById, needsDbUpdate, cards } = useData();
   const params = useSearchParams();
   const router = useRouter();
   const [dir, setDir] = useState<DebtDirection>("owed");
@@ -42,7 +43,10 @@ function Debts() {
   const scoped = useMemo(() => debts.filter((d) => !activeId || d.business_id === activeId), [debts, activeId]);
   const cop = (d: Debt) => toCOP(d.remaining, d.currency);
   const totalOwed = scoped.filter((d) => d.direction === "owed").reduce((s, d) => s + cop(d), 0);
-  const totalOwe = scoped.filter((d) => d.direction === "owe").reduce((s, d) => s + cop(d), 0);
+  const scopedCards = cards.filter((c) => !activeId || c.card.business_id === activeId);
+  const cardsDebt = scopedCards.reduce((s, c) => s + c.totalDebt, 0);
+  const debtsOwe = scoped.filter((d) => d.direction === "owe").reduce((s, d) => s + cop(d), 0);
+  const totalOwe = debtsOwe + cardsDebt;
 
   const ofDir = scoped.filter((d) => d.direction === dir);
   const pending = ofDir.filter((d) => d.remaining > 0);
@@ -56,7 +60,7 @@ function Debts() {
   const catMap = new Map<string, number>();
   pending.forEach((d) => { const k = d.category || "Sin categoría"; catMap.set(k, (catMap.get(k) ?? 0) + cop(d)); });
   const byCat = [...catMap.entries()].sort((a, b) => b[1] - a[1]).map(([name, value], i) => ({ id: name, name, value, color: PALETTE[i % PALETTE.length] }));
-  const dirTotal = dir === "owed" ? totalOwed : totalOwe;
+  const dirTotal = dir === "owed" ? totalOwed : debtsOwe;
 
   // agrupar por persona
   const people = new Map<string, Debt[]>();
@@ -97,8 +101,15 @@ function Debts() {
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <Seg value={dir} onChange={(v) => { setDir(v); setCat(null); }} options={[{ value: "owed", label: `Me deben (${ofDirCount(scoped, "owed")})`, cls: "income" }, { value: "owe", label: `Yo debo (${ofDirCount(scoped, "owe")})`, cls: "expense" }]} />
+        <Seg value={dir} onChange={(v) => { setDir(v); setCat(null); }} options={[{ value: "owed", label: `Me deben (${ofDirCount(scoped, "owed")})`, cls: "income" }, { value: "owe", label: `Yo debo (${ofDirCount(scoped, "owe") + scopedCards.filter((c) => c.totalDebt > 0).length})`, cls: "expense" }]} />
       </div>
+
+      {dir === "owe" && <CardsSection />}
+      {dir === "owe" && cardsDebt > 0 && (
+        <div className="net-line" style={{ marginTop: 0 }}>
+          <span className="muted">Deuda en tarjetas</span><b className="num" style={{ color: "var(--expense)" }}>{money(cardsDebt)}</b>
+        </div>
+      )}
 
       {!activeId && byBiz.length > 0 && (
         <>
@@ -114,7 +125,7 @@ function Debts() {
         </>
       )}
 
-      <h3 className="h-section">{dir === "owed" ? "Quién me debe" : "A quién le debo"}</h3>
+      <h3 className="h-section">{dir === "owed" ? "Quién me debe" : "Préstamos y otras deudas"}</h3>
       {byCat.length > 1 && (
         <div className="chips scroll" style={{ marginBottom: 10 }}>
           <button className={"chip" + (!cat ? " on" : "")} onClick={() => setCat(null)}>Todas</button>
@@ -125,7 +136,7 @@ function Debts() {
       {groups.length === 0 && (
         <div className="empty">
           <div className="big-ico"><IHandCoins size={28} /></div>
-          <b>{dir === "owed" ? "Nadie te debe" : "No tienes deudas"}{active ? ` en ${active.name}` : ""}</b>
+          <b>{dir === "owed" ? "Nadie te debe" : "Sin préstamos ni otras deudas"}{active ? ` en ${active.name}` : ""}</b>
           {dir === "owed" ? "Registra préstamos que hiciste o ventas a crédito." : "Registra préstamos, créditos o lo que le debes a proveedores."}
           <div style={{ marginTop: 14 }}><button className="btn small" onClick={() => setForm("new")}><IPlus size={16} /> Agregar</button></div>
         </div>

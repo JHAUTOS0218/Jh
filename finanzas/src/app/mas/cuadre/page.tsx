@@ -8,7 +8,7 @@ import { AccountIcon } from "@/components/AccountIcon";
 
 /** Suma de cuentas por banco para comparar con lo que muestra la app del banco */
 export default function Reconcile() {
-  const { accounts, balances, bizById } = useData();
+  const { moneyAccounts: accounts, balances, bizById, cards } = useData();
 
   const groups = new Map<string, Account[]>();
   for (const a of accounts) {
@@ -24,6 +24,22 @@ export default function Reconcile() {
         Compara cada total con el saldo que te muestra el banco. Si no cuadra, entra a la cuenta en <b>Cuentas</b> y escribe el saldo real.
       </p>
       {!sorted.length && <div className="empty">No tienes cuentas todavía.</div>}
+      {cards.length > 0 && (
+        <>
+          <h3 className="h-section">Tarjetas de crédito</h3>
+          <div className="list">
+            {cards.map((c) => (
+              <div key={c.card.id} className="row">
+                <div className="main"><div className="t1">{c.card.name}</div><div className="t2">{c.card.bank || "—"}{c.limit ? ` · disponible ${money(c.available)}` : ""}</div></div>
+                <div className="amt num expense">
+                  -{money(c.debtCOP)}
+                  {c.usd && <span className="s">-{money(c.debtUSD, "USD")}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
       {sorted.map(([bank, list]) => {
         const cop = list.filter((a) => a.currency === "COP").reduce((s, a) => s + (balances[a.id] ?? 0), 0);
         const usd = list.filter((a) => a.currency === "USD").reduce((s, a) => s + (balances[a.id] ?? 0), 0);

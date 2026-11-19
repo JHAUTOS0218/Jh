@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { sb } from "./supabase";
-import { DEFAULT_DEBT_CATEGORIES, type Account, type Business, type Category, type Currency, type Debt, type Recurring, type Settings, type Tx } from "./types";
+import { DEFAULT_DEBT_CATEGORIES, type Account, type CardInfo, type Business, type Category, type Currency, type Debt, type Recurring, type Settings, type Tx } from "./types";
 import { applySavedTheme, applyTheme, DEFAULT_THEME } from "./theme";
 
 interface Data {
@@ -12,8 +12,12 @@ interface Data {
   businesses: Business[];        // activos, ordenados
   allBusinesses: Business[];     // incluye archivados
   categories: Category[];
-  accounts: Account[];           // activas
+  accounts: Account[];           // activas (incluye tarjetas, para registrar compras)
   allAccounts: Account[];
+  /** cuentas con plata (sin tarjetas de crédito) */
+  moneyAccounts: Account[];
+  /** tarjetas de crédito con su deuda, cupo y disponible */
+  cards: CardInfo[];
   balances: Record<string, number>;
   settings: Settings;
   /** deudas activas con lo pagado y lo que falta */
@@ -113,7 +117,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       rows.map((r) => { const o = { ...r }; keys.forEach((k) => { if (o[k] != null) (o[k] as unknown) = Number(o[k]); }); return o; });
     setBiz(num(b.data as Business[], ["partner_share"]));
     setCats(cat.data as Category[]);
-    setAccs(num(a.data as Account[], ["initial_balance", "min_balance"]));
+    setAccs(num(a.data as Account[], ["initial_balance", "min_balance", "credit_limit", "overlimit_pct", "card_fx_rate"]));
     const map: Record<string, number> = {};
     (bal.data as { account_id: string; balance: number }[]).forEach((r) => (map[r.account_id] = Number(r.balance)));
     setBalances(map);
@@ -183,6 +187,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const accounts = useMemo(() => allAccounts.filter((a) => !a.archived), [allAccounts]);
   const debts = useMemo(() => allDebts.filter((d) => !d.archived), [allDebts]);
   const recurring = useMemo(() => allRecurring.filter((r) => r.active), [allRecurring]);
+  const moneyAccounts = useMemo(() => accounts.filter((a) => a.type !== "card"), [accounts]);
+  const cards = useMemo<CardInfo[]>(() => {
+    return accounts
+      .filter((a) => a.type === "card" && !a.parent_id)
+      .map((card) => {
+        const usd = accounts.find((x) => x.parent_id === card.id);
+        const debtCOP = Math.max(0, -(balances[card.id] ?? 0));
+        const debtUSD = usd ? Math.max(0, -(balances[usd.id] ?? 0)) : 0;
+        const rate = card.card_fx_rate || settings.usd_rate;
+        const totalDebt = Math.round(debtCOP + debtUSD * rate);
+        const limit = card.credit_limit ?? 0;
+        const overlimit = Math.round((limit * (card.overlimit_pct ?? 0)) / 100);
+        return { card, usd, debtCOP, debtUSD, rate, totalDebt, limit, overlimit, available: limit - totalDebt };
+      });
+  }, [accounts, balances, settings.usd_rate]);
 
   // si el negocio activo ya no existe, volver a Global
   useEffect(() => {
@@ -201,6 +220,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       categories,
       accounts,
       allAccounts,
+      moneyAccounts,
+      cards,
       balances,
       settings,
       debts,
@@ -224,7 +245,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       txDraft,
       closeTx: () => setTxDraft(undefined),
     };
-  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, balances, settings, debts, allDebts, needsDbUpdate, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
+  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, moneyAccounts, cards, balances, settings, debts, allDebts, needsDbUpdate, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
