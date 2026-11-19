@@ -40,7 +40,9 @@ function Debts() {
     }
   }, [params, router, allDebts]);
 
-  const scoped = useMemo(() => debts.filter((d) => !activeId || d.business_id === activeId), [debts, activeId]);
+  const inScope = useMemo(() => debts.filter((d) => !activeId || d.business_id === activeId), [debts, activeId]);
+  const scoped = useMemo(() => inScope.filter((d) => !d.excluded), [inScope]);
+  const apart = inScope.filter((d) => d.excluded && d.direction === dir && d.remaining > 0);
   const cop = (d: Debt) => toCOP(d.remaining, d.currency);
   const totalOwed = scoped.filter((d) => d.direction === "owed").reduce((s, d) => s + cop(d), 0);
   const scopedCards = cards.filter((c) => !activeId || c.card.business_id === activeId);
@@ -172,6 +174,23 @@ function Debts() {
           })}
         </div>
       ))}
+
+      {apart.length > 0 && (
+        <>
+          <h3 className="h-section">Aparte · no suman en los totales</h3>
+          <div className="list" style={{ opacity: 0.85 }}>
+            {apart.map((d) => (
+              <button key={d.id} className="row link" onClick={() => setDetailId(d.id)}>
+                <div className="main">
+                  <div className="t1">{d.person}</div>
+                  <div className="t2">{[d.description, bizById(d.business_id)?.name, d.category].filter(Boolean).join(" · ")}</div>
+                </div>
+                <div className="amt num" style={{ color: "var(--muted)" }}>{money(d.remaining, d.currency)}<span className="s">aparte</span></div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {ofDir.some((d) => d.remaining <= 0) && (
         <button className="link-btn" style={{ display: "block", margin: "8px auto 0" }} onClick={() => setShowPaid(!showPaid)}>

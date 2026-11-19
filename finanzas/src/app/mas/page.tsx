@@ -86,6 +86,7 @@ export default function More() {
         <Item href="/mas/cuentas" icon={<IWallet size={20} />} label="Cuentas y bolsillos" />
         <Item href="/mas/negocios" icon={<IBriefcase size={20} />} label="Negocios y categorías" />
         <Item href="/deudas" icon={<IHandCoins size={20} />} label="Deudas y cuentas por cobrar" />
+        <Item href="/activos" icon={<ITarget size={20} />} label="Activos (carros, motos, oro)" />
         <Item onClick={() => setPanel("debtcats")} icon={<ITag size={20} />} label="Categorías de deudas" />
         <Item href="/mas/cuadre" icon={<IScale size={20} />} label="Cuadre por banco" />
         <Item onClick={() => { setRateText(amountToInput(settings.usd_rate)); setPanel("rate"); }} icon={<IDollar size={20} />} label="Tasa del dólar" value={money(settings.usd_rate)} />

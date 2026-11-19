@@ -10,13 +10,14 @@ import { TopBar } from "@/components/TopBar";
 import { daysUntilDue, nextDueText } from "@/components/Debts";
 import { RecurringRow, recurringStatus, useRecurringSheets } from "@/components/Recurring";
 import { cardDueText } from "@/components/Cards";
+import { mineAtCost, saleOf } from "@/components/Assets";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
 import { AccountIcon } from "@/components/AccountIcon";
 import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus } from "@/components/Icons";
 
 export default function Home() {
-  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards } = useData();
+  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards, assets } = useData();
   const { sheets: recSheets, edit: editRec, pay: payRec } = useRecurringSheets();
   const now = currentYM();
   const from = monthRange(addMonths(now, -5)).from;
@@ -42,7 +43,10 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txs, activeId, active, catById]);
 
-  const myDebts = debts.filter((d) => d.remaining > 0 && (!activeId || d.business_id === activeId));
+  const myDebts = debts.filter((d) => d.remaining > 0 && !d.excluded && (!activeId || d.business_id === activeId));
+  const myAssets = assets.filter((x) => !activeId || x.business_id === activeId);
+  const assetsMine = myAssets.reduce((s, x) => s + mineAtCost(x), 0);
+  const assetsSale = myAssets.reduce((s, x) => s + saleOf(x), 0);
   const owedTotal = myDebts.filter((d) => d.direction === "owed").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
   const oweTotal = myDebts.filter((d) => d.direction === "owe").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0) + myCards.reduce((s, c) => s + c.totalDebt, 0);
   const cardAlerts = myCards.filter((c) => (c.card.pay_day && c.totalDebt > 0 && daysUntilDue(c.card.pay_day) <= 5) || (c.limit > 0 && c.available < c.limit * 0.1));
@@ -110,10 +114,10 @@ export default function Home() {
           <span style={{ color: "rgba(255,255,255,0.75)" }}>{active?.partner_share ? "Tu utilidad del mes" : "Utilidad del mes"}</span>
           <b className="num">{money(sum.myProfit)}</b>
         </div>
-        {(owedTotal > 0 || oweTotal > 0) && (
+        {(owedTotal > 0 || oweTotal > 0 || assetsMine > 0) && (
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 13.5 }}>
-            <span style={{ color: "rgba(255,255,255,0.75)" }}>Neto con deudas</span>
-            <b className="num">{money(totalCOP + owedTotal - oweTotal)}</b>
+            <span style={{ color: "rgba(255,255,255,0.75)" }}>{assetsMine > 0 ? "Patrimonio (con activos y deudas)" : "Neto con deudas"}</span>
+            <b className="num">{money(totalCOP + owedTotal - oweTotal + assetsMine)}</b>
           </div>
         )}
         <div className="dots">{order.map((id, i) => <span key={id ?? "g"} className={i === idx ? "on" : ""} />)}</div>
@@ -123,6 +127,13 @@ export default function Home() {
         <Link href="/deudas" className="grid2" style={{ marginTop: 14 }}>
           <div className="kpi income"><div className="k">Me deben</div><div className="v num">{money(owedTotal)}</div></div>
           <div className="kpi expense"><div className="k">Debo</div><div className="v num">{money(oweTotal)}</div></div>
+        </Link>
+      )}
+
+      {myAssets.length > 0 && (
+        <Link href="/activos" className="kpi" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+          <span><span className="k">Activos ({myAssets.length})</span><span className="v num" style={{ display: "block" }}>{money(assetsSale)}</span></span>
+          <span className="xsmall muted" style={{ textAlign: "right" }}>posible venta<br />costo {money(myAssets.reduce((s, x) => s + x.cost, 0))}</span>
         </Link>
       )}
 

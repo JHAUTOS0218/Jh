@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { sb } from "./supabase";
-import { DEFAULT_DEBT_CATEGORIES, type Account, type CardInfo, type Business, type Category, type Currency, type Debt, type Recurring, type Settings, type Tx } from "./types";
+import { DEFAULT_DEBT_CATEGORIES, type Account, type Asset, type CardInfo, type Business, type Category, type Currency, type Debt, type Recurring, type Settings, type Tx } from "./types";
 import { applySavedTheme, applyTheme, DEFAULT_THEME } from "./theme";
 
 interface Data {
@@ -25,6 +25,9 @@ interface Data {
   allDebts: Debt[];
   /** true si falta correr la actualización 02 en Supabase */
   needsDbUpdate: boolean;
+  /** activos (carros, motos, oro…) */
+  assets: Asset[];
+  allAssets: Asset[];
   /** pagos fijos activos y los pagos hechos este mes (id del pago fijo → movimiento) */
   recurring: Recurring[];
   allRecurring: Recurring[];
@@ -69,6 +72,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [allDebts, setDebts] = useState<Debt[]>([]);
   const [needsDbUpdate, setNeedsDbUpdate] = useState(false);
   const [allRecurring, setRecurring] = useState<Recurring[]>([]);
+  const [allAssets, setAssets] = useState<Asset[]>([]);
   const [recurringPaid, setRecurringPaid] = useState<Record<string, Tx>>({});
   const [needsRecurringUpdate, setNeedsRecurringUpdate] = useState(false);
   const [activeId, setActiveIdState] = useState<string | null>(null);
@@ -100,7 +104,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const c = sb();
     const now = new Date();
     const mFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-    const [b, cat, a, bal, st, dbt, dbal, rec, recTx] = await Promise.all([
+    const [b, cat, a, bal, st, dbt, dbal, rec, recTx, ast] = await Promise.all([
       c.from("businesses").select("*").order("sort").order("created_at"),
       c.from("categories").select("*").order("sort").order("created_at"),
       c.from("accounts").select("*").order("sort").order("created_at"),
@@ -110,7 +114,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       c.from("debt_balances").select("*"),
       c.from("recurring_payments").select("*").order("day_of_month").order("sort"),
       c.from("transactions").select("*").not("recurring_id", "is", null).gte("date", mFrom).order("date", { ascending: false }),
+      c.from("assets").select("*").order("sort").order("created_at"),
     ]);
+    if (!ast.error) {
+      setAssets((ast.data as Asset[]).map((x) => ({
+        ...x,
+        cost: Number(x.cost),
+        sale_price: x.sale_price == null ? null : Number(x.sale_price),
+        partner_amount: x.partner_amount == null ? null : Number(x.partner_amount),
+        sold_price: x.sold_price == null ? null : Number(x.sold_price),
+      })));
+    }
     const err = b.error || cat.error || a.error || bal.error || st.error;
     if (err) throw err;
     const num = <T,>(rows: T[], keys: (keyof T)[]) =>
@@ -187,6 +201,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const accounts = useMemo(() => allAccounts.filter((a) => !a.archived), [allAccounts]);
   const debts = useMemo(() => allDebts.filter((d) => !d.archived), [allDebts]);
   const recurring = useMemo(() => allRecurring.filter((r) => r.active), [allRecurring]);
+  const assets = useMemo(() => allAssets.filter((x) => x.status === "active"), [allAssets]);
   const moneyAccounts = useMemo(() => accounts.filter((a) => a.type !== "card"), [accounts]);
   const cards = useMemo<CardInfo[]>(() => {
     return accounts
@@ -227,6 +242,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       debts,
       allDebts,
       needsDbUpdate,
+      assets,
+      allAssets,
       recurring,
       allRecurring,
       recurringPaid,
@@ -245,7 +262,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       txDraft,
       closeTx: () => setTxDraft(undefined),
     };
-  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, moneyAccounts, cards, balances, settings, debts, allDebts, needsDbUpdate, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
+  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, moneyAccounts, cards, balances, settings, debts, allDebts, needsDbUpdate, assets, allAssets, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

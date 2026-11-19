@@ -26,7 +26,7 @@ export function TxRow({ t, showBiz }: { t: Tx; showBiz?: boolean }) {
 
   const sub =
     isDebt
-      ? [t.debt_role === "payment" ? "Abono de deuda" : "Préstamo", acc?.name].filter(Boolean).join(" · ")
+      ? [t.debt_role === "payment" ? "Abono de deuda" : t.debt_id ? "Préstamo" : "Capital", acc?.name].filter(Boolean).join(" · ")
       : t.kind === "transfer"
       ? `${acc?.name ?? "?"} → ${to?.name ?? "?"}`
       : [t.description ? cat?.name : null, acc?.name, showBiz && biz && acc?.business_id !== biz.id ? biz.name : null].filter(Boolean).join(" · ");

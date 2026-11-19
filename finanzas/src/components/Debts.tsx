@@ -53,6 +53,7 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
   const [startDate, setStartDate] = useState(debt?.start_date ?? todayISO());
   const [note, setNote] = useState(debt?.note ?? "");
   const [moveMoney, setMoveMoney] = useState(false);
+  const [excluded, setExcluded] = useState(debt?.excluded ?? false);
   const [accountId, setAccountId] = useState<string | undefined>();
   const [pickAcc, setPickAcc] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -78,6 +79,7 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
       due_day: dueDay ? Math.min(31, Math.max(1, parseInt(dueDay, 10))) : null,
       start_date: startDate,
       note: note.trim() || null,
+      excluded,
     };
     if (debt) {
       if (total < debt.paid && !confirm(`Ya se han pagado ${money(debt.paid, debt.currency)}, más que el nuevo total. ¿Guardar igual?`)) { setBusy(false); return; }
@@ -187,6 +189,16 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
           <label htmlFor="debt-note">Nota</label>
           <input id="debt-note" className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" />
         </div>
+      </div>
+
+      <div className="field">
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "var(--ink)", fontWeight: 400 }}>
+          <input type="checkbox" checked={excluded} onChange={(e) => setExcluded(e.target.checked)} style={{ marginTop: 3 }} />
+          <span>
+            Dejarla aparte (no sumar en los totales)
+            <span className="muted xsmall" style={{ display: "block" }}>Para deudas inviables, en negociación a largo plazo o que ves más como inversión. Se guarda pero no infla “Yo debo”.</span>
+          </span>
+        </label>
       </div>
 
       {isNew && (

@@ -109,11 +109,33 @@ export interface Debt {
   start_date: string;
   note: string | null;
   archived: boolean;
+  /** se guarda pero no suma en los totales (deuda inviable / aparte) */
+  excluded?: boolean;
   created_at: string;
   /** calculados en la app */
   paid: number;
   remaining: number;
 }
+
+export interface Asset {
+  id: string;
+  name: string;
+  category: string;
+  business_id: string;
+  cost: number;
+  sale_price: number | null;
+  partner_name: string | null;
+  partner_amount: number | null;
+  detail: string | null;
+  note: string | null;
+  acquired_date: string | null;
+  status: "active" | "sold";
+  sold_price: number | null;
+  sold_date: string | null;
+  sort: number;
+}
+
+export const ASSET_CATEGORIES = ["Vehículo", "Moto", "Oro y joyas", "Inventario", "Inmueble", "Otro"];
 
 export interface Settings {
   usd_rate: number;
