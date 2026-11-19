@@ -77,6 +77,7 @@ export interface Tx {
   debt_id?: string | null;
   debt_role?: "disbursement" | "payment" | null;
   recurring_id?: string | null;
+  raw_text?: string | null;
 }
 
 export interface Recurring {

@@ -17,7 +17,7 @@ export function TxForm() {
   const { txDraft, closeTx } = d;
   const open = txDraft !== undefined;
   return (
-    <Sheet open={open} onClose={closeTx} full title={txDraft?.id ? "Editar movimiento" : "Nuevo movimiento"}>
+    <Sheet open={open} onClose={closeTx} full title={txDraft?.status === "pending" ? "Clasificar movimiento" : txDraft?.id ? "Editar movimiento" : "Nuevo movimiento"}>
       {open && <FormBody key={txDraft?.id ?? "new"} />}
     </Sheet>
   );
@@ -141,6 +141,14 @@ function FormBody() {
 
   return (
     <div>
+      {txDraft?.status === "pending" && (
+        <div className="alert" style={{ background: "var(--petrol-soft)", color: "var(--petrol-deep)", marginBottom: 12, whiteSpace: "pre-line" }}>
+          <span>
+            <b>Llegó automáticamente.</b> Elige la cuenta, el negocio y la categoría y toca Guardar.
+            {txDraft.raw_text ? <span className="xsmall" style={{ display: "block", marginTop: 6, opacity: 0.8 }}>{txDraft.raw_text}</span> : null}
+          </span>
+        </div>
+      )}
       {isDebt ? (
         <div className="alert" style={{ background: "var(--petrol-soft)", color: "var(--petrol-deep)" }}>
           Este movimiento es parte de una deuda ({kind === "debt_in" ? "entró plata" : "salió plata"}). No cuenta como ingreso ni gasto.

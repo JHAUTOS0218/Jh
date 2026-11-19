@@ -102,7 +102,8 @@ export default function More() {
       <h3 className="h-section">Inteligencia artificial</h3>
       <div className="list">
         <Item icon={<ISparkle size={20} />} label="Pregúntale a tus finanzas" soon="Llega en la Fase 3" />
-        <Item icon={<IInbox size={20} />} label="Por clasificar (Apple Pay y SMS)" soon="Llega en la Fase 3" />
+        <Item href="/por-clasificar" icon={<IInbox size={20} />} label="Por clasificar (Apple Pay y SMS)" />
+        <Item href="/mas/atajos" icon={<IInbox size={20} />} label="Conectar Apple Pay y SMS (Atajos)" />
       </div>
 
       <h3 className="h-section">Datos</h3>

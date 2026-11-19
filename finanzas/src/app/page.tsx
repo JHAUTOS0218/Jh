@@ -14,10 +14,10 @@ import { mineAtCost, saleOf } from "@/components/Assets";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
 import { AccountIcon } from "@/components/AccountIcon";
-import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus } from "@/components/Icons";
+import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus, IInbox } from "@/components/Icons";
 
 export default function Home() {
-  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards, assets } = useData();
+  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards, assets, pendingCount } = useData();
   const { sheets: recSheets, edit: editRec, pay: payRec } = useRecurringSheets();
   const now = currentYM();
   const from = monthRange(addMonths(now, -5)).from;
@@ -129,6 +129,14 @@ export default function Home() {
         <Link href="/deudas" className="grid2" style={{ marginTop: 14 }}>
           <div className="kpi income"><div className="k">Me deben</div><div className="v num">{money(owedTotal)}</div></div>
           <div className="kpi expense"><div className="k">Debo</div><div className="v num">{money(oweTotal)}</div></div>
+        </Link>
+      )}
+
+      {pendingCount > 0 && (
+        <Link href="/por-clasificar" className="alert" style={{ display: "flex", marginTop: 12, background: "var(--petrol-soft)", color: "var(--petrol-deep)" }}>
+          <IInbox size={18} />
+          <span style={{ flex: 1 }}><b>{pendingCount} {pendingCount === 1 ? "movimiento" : "movimientos"} por clasificar</b> (Apple Pay / SMS)</span>
+          <b>Ver ›</b>
         </Link>
       )}
 

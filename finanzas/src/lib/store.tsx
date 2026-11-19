@@ -25,6 +25,8 @@ interface Data {
   allDebts: Debt[];
   /** true si falta correr la actualización 02 en Supabase */
   needsDbUpdate: boolean;
+  /** movimientos que llegaron de Apple Pay / SMS y faltan por clasificar */
+  pendingCount: number;
   /** activos (carros, motos, oro…) */
   assets: Asset[];
   allAssets: Asset[];
@@ -73,6 +75,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [needsDbUpdate, setNeedsDbUpdate] = useState(false);
   const [allRecurring, setRecurring] = useState<Recurring[]>([]);
   const [allAssets, setAssets] = useState<Asset[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
   const [recurringPaid, setRecurringPaid] = useState<Record<string, Tx>>({});
   const [needsRecurringUpdate, setNeedsRecurringUpdate] = useState(false);
   const [activeId, setActiveIdState] = useState<string | null>(null);
@@ -116,6 +119,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       c.from("transactions").select("*").not("recurring_id", "is", null).gte("date", mFrom).order("date", { ascending: false }),
       c.from("assets").select("*").order("sort").order("created_at"),
     ]);
+    const pend = await c.from("transactions").select("id", { count: "exact", head: true }).eq("status", "pending");
+    setPendingCount(pend.count ?? 0);
     if (!ast.error) {
       setAssets((ast.data as Asset[]).map((x) => ({
         ...x,
@@ -244,6 +249,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       needsDbUpdate,
       assets,
       allAssets,
+      pendingCount,
       recurring,
       allRecurring,
       recurringPaid,
@@ -262,7 +268,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       txDraft,
       closeTx: () => setTxDraft(undefined),
     };
-  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, moneyAccounts, cards, balances, settings, debts, allDebts, needsDbUpdate, assets, allAssets, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
+  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, moneyAccounts, cards, balances, settings, debts, allDebts, needsDbUpdate, assets, allAssets, pendingCount, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
