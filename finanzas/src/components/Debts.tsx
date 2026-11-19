@@ -11,7 +11,27 @@ import { AccountIcon } from "./AccountIcon";
 import { IChevR, IClose, IEdit, IPlus, ITrash } from "./Icons";
 
 /** "vence el 15" / "vence hoy" / "vence en 3 días" */
+/** días que faltan para el próximo pago (negativo = vencido). Usa la fecha exacta si existe, si no el día del mes. */
+export function debtDueDays(d: Debt): number | null {
+  if (d.next_due) {
+    const [y, m, dd] = d.next_due.split("-").map(Number);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((new Date(y, m - 1, dd).getTime() - today.getTime()) / 86400000);
+  }
+  if (d.due_day) return daysUntilDue(d.due_day);
+  return null;
+}
+
 export function nextDueText(d: Debt) {
+  if (d.next_due) {
+    const days = debtDueDays(d)!;
+    if (days < 0) return days === -1 ? "venció ayer" : `venció hace ${-days} días`;
+    if (days === 0) return "vence hoy";
+    if (days === 1) return "vence mañana";
+    if (days <= 5) return `vence en ${days} días`;
+    return `próximo pago ${shortDate(d.next_due)}`;
+  }
   if (!d.due_day) return null;
   const days = daysUntilDue(d.due_day);
   if (days === 0) return "vence hoy";
@@ -50,6 +70,7 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
   const [parts, setParts] = useState<Part[]>([{ businessId: firstBiz, amount: amountToInput(debt?.total_amount ?? 0, debt?.currency ?? "COP") }]);
   const [installment, setInstallment] = useState(amountToInput(debt?.installment ?? 0, debt?.currency ?? "COP"));
   const [dueDay, setDueDay] = useState(debt?.due_day ? String(debt.due_day) : "");
+  const [nextDue, setNextDue] = useState(debt?.next_due ?? "");
   const [startDate, setStartDate] = useState(debt?.start_date ?? todayISO());
   const [note, setNote] = useState(debt?.note ?? "");
   const [moveMoney, setMoveMoney] = useState(false);
@@ -77,6 +98,7 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
       currency,
       installment: parseAmount(installment, currency) || null,
       due_day: dueDay ? Math.min(31, Math.max(1, parseInt(dueDay, 10))) : null,
+      next_due: nextDue || null,
       start_date: startDate,
       note: note.trim() || null,
       excluded,
@@ -179,6 +201,11 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
           <label htmlFor="debt-day">Día de pago (1–31)</label>
           <input id="debt-day" className="input num" inputMode="numeric" value={dueDay} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="Opcional" />
         </div>
+      </div>
+      <div className="field">
+        <label htmlFor="debt-next">Próxima fecha de pago (fecha exacta, opcional)</label>
+        <input id="debt-next" className="input" type="date" value={nextDue} onChange={(e) => setNextDue(e.target.value)} />
+        <p className="muted xsmall" style={{ margin: "6px 2px 0" }}>Úsala para cuotas en fechas distintas (ej. el 15 y el 30). Te aviso en Inicio cuando se acerque.</p>
       </div>
       <div className="grid2">
         <div className="field">
@@ -318,7 +345,8 @@ export function DebtDetail({ debt, onEdit, onClose }: { debt: Debt; onEdit: () =
           ["Negocio", b?.name],
           ["Categoría", debt.category],
           ["Cuota", debt.installment ? money(debt.installment, debt.currency) : null],
-          ["Día de pago", debt.due_day ? `${debt.due_day} de cada mes${nextDueText(debt) ? ` (${nextDueText(debt)})` : ""}` : null],
+          ["Próximo pago", debt.next_due ? `${shortDate(debt.next_due)} (${nextDueText(debt)})` : null],
+          ["Día de pago", debt.due_day && !debt.next_due ? `${debt.due_day} de cada mes${nextDueText(debt) ? ` (${nextDueText(debt)})` : ""}` : null],
           ["Desde", shortDate(debt.start_date)],
           ["Nota", debt.note],
         ].filter(([, v]) => v).map(([k, v]) => (

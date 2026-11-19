@@ -109,6 +109,8 @@ export interface Debt {
   start_date: string;
   note: string | null;
   archived: boolean;
+  /** fecha exacta del próximo pago/cobro (yyyy-mm-dd) */
+  next_due?: string | null;
   /** se guarda pero no suma en los totales (deuda inviable / aparte) */
   excluded?: boolean;
   created_at: string;

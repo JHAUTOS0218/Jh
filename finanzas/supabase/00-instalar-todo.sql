@@ -251,6 +251,8 @@ grant select, insert, update, delete on public.assets to authenticated;
 -- Deudas que se guardan pero no suman en "Yo debo" (inviables / aparte)
 alter table public.debts add column if not exists excluded boolean not null default false;
 
+alter table public.debts add column if not exists next_due date;
+
 -- Permisos para el usuario que inicia sesión (los proyectos nuevos de Supabase no los dan por defecto).
 -- La seguridad por fila (RLS) sigue limitando cada tabla a los datos de su dueño.
 grant usage on schema public to authenticated;

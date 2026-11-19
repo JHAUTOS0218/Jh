@@ -7,7 +7,7 @@ import { addMonths, currentYM, money, monthLabel, monthRange, monthShort, ymKey 
 import { summarize } from "@/lib/stats";
 import { BizDot } from "@/components/Business";
 import { TopBar } from "@/components/TopBar";
-import { daysUntilDue, nextDueText } from "@/components/Debts";
+import { daysUntilDue, debtDueDays, nextDueText } from "@/components/Debts";
 import { RecurringRow, recurringStatus, useRecurringSheets } from "@/components/Recurring";
 import { cardDueText } from "@/components/Cards";
 import { mineAtCost, saleOf } from "@/components/Assets";
@@ -50,10 +50,12 @@ export default function Home() {
   const owedTotal = myDebts.filter((d) => d.direction === "owed").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0);
   const oweTotal = myDebts.filter((d) => d.direction === "owe").reduce((s, d) => s + toCOP(d.remaining, d.currency), 0) + myCards.reduce((s, c) => s + c.totalDebt, 0);
   const cardAlerts = myCards.filter((c) => (c.card.pay_day && c.totalDebt > 0 && daysUntilDue(c.card.pay_day) <= 5) || (c.limit > 0 && c.available < c.limit * 0.1));
-  const dueSoon = myDebts.filter((d) => d.due_day && daysUntilDue(d.due_day) <= 5).sort((a, b) => daysUntilDue(a.due_day!) - daysUntilDue(b.due_day!));
+  const dueSoon = myDebts
+    .filter((d) => { const n = debtDueDays(d); return n !== null && n <= 5; })
+    .sort((a, b) => (debtDueDays(a) ?? 0) - (debtDueDays(b) ?? 0));
   const dueGroups = Object.values(
     dueSoon.reduce<Record<string, { key: string; first: (typeof dueSoon)[number]; installment: number }>>((acc, d) => {
-      const key = `${d.direction}|${d.person.trim().toLowerCase()}|${d.due_day}`;
+      const key = `${d.direction}|${d.person.trim().toLowerCase()}|${d.next_due ?? d.due_day}`;
       acc[key] ??= { key, first: d, installment: 0 };
       acc[key].installment += toCOP(Math.min(d.installment ?? d.remaining, d.remaining), d.currency);
       return acc;
