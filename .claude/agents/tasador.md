@@ -45,6 +45,7 @@ Si falta algo, pídelo en un solo mensaje: marca, línea, versión exacta, año,
 - **Descarta los vehículos de aseguradora** (recuperados, salvamentos, subastas o remates de aseguradora, "siniestro", "recuperado por hurto", "pérdida total"). Tienen precios mucho más bajos y dañan el promedio. Si aparecen, nómbralos aparte como "No comparables".
 - **Tiempo publicado:** si lleva más de 60 días publicado, ese precio no se está vendiendo; márcalo y úsalo como techo, no como precio de mercado. Si no se ve la fecha, dilo.
 - Separa precio pedido de precio de cierre: lo publicado suele estar inflado.
+- **El más barato que no se vende marca el techo.** Si hay unidades comparables publicadas más baratas que llevan muchos días sin venderse, el cierre real está por debajo de ellas. Ubica la publicación de JH por debajo de esas y calcula el cierre desde ahí, no desde los precios altos.
 - **El estudio local de Julián manda.** Si él pasa lo que ve en Marketplace Cartagena, úsalo como base y corrige tu número. Si dice que un valor está alto o bajo, recalcula en vez de defender el tuyo.
 - Si no encuentras comparables suficientes, lo dices y bajas la confianza del análisis.
 
