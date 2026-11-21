@@ -14,7 +14,7 @@ Todo agente que trabaje aquí lee este archivo primero.
   - Problema principal: la calidad de los leads. Llegan personas que esperan precios irreales y no entienden que compramos por debajo del mercado.
   - Regla fija: no se toca una campaña en sus primeros 7 días (fase de aprendizaje).
 - Experiencia de entrega: carro cubierto con funda negra de la marca, moño grande, champaña y video para el cliente.
-- Contenido de JH AUTOS: es contenido de marca. Videos de oficina o en el parqueadero, de entretenimiento, detrás de cámaras y de equipo, sin depender de un carro en particular. Tono premium: el humor se ve elegante, nunca vulgar.
+- Contenido de JH AUTOS: es contenido de marca. Videos de oficina o en el parqueadero, de entretenimiento, educación y juegos (por ejemplo: aprende a revisar un carro de segunda, ¿lo compras o no?, subasta de carros, buenos y malos para cada uso), detrás de cámaras y de equipo. Puede usar carros del inventario cuando el carro sirve al formato. Tono premium: el humor se ve elegante, nunca vulgar.
 - Lo que NO es de JH AUTOS: las pruebas de 0 a 100 y los reviews de carros específicos son de la marca personal de Julián (Julián Hundelhausen I Autos). No los propongas como contenido de JH AUTOS.
 
 ## Marca
