@@ -21,6 +21,18 @@ const client = () => createClient(url, key, { auth: { persistSession: false } })
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8" } });
+
+/** Respuesta de error que también sirve como notificación en el Atajo */
+const fail = (error: string, status: number) => json({ ok: false, error, mensaje: `⚠️ JH Finanzas: ${error}` }, status);
+
+/** Guarda lo que llegó (sin el token) para poder revisar errores */
+async function logAttempt(token: string, body: Record<string, unknown>, result: string) {
+  try {
+    const safe: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(body)) if (k !== "token") safe[k] = typeof v === "string" ? v.slice(0, 500) : v;
+    await client().rpc("jh_ingest_log", { p_token: token, p_payload: safe, p_result: result });
+  } catch {}
+}
 const text = (body: string, status = 200) =>
   new Response(body, { status, headers: { "content-type": "text/plain; charset=utf-8" } });
 
@@ -46,11 +58,11 @@ export async function POST(req: Request) {
       try { body = JSON.parse(t); } catch { body = { texto: t }; }
     }
   } catch {
-    return json({ ok: false, error: "No pude leer los datos enviados" }, 400);
+    return fail("No pude leer los datos enviados", 400);
   }
 
   const token = String(body.token ?? req.headers.get("x-jh-token") ?? new URL(req.url).searchParams.get("token") ?? "").trim();
-  if (!token) return json({ ok: false, error: "Falta el token" }, 401);
+  if (!token) { await logAttempt("", body, "sin token"); return fail("Falta el token en el Atajo", 401); }
 
   const texto = String(body.texto ?? body.text ?? "").trim();
   const comercio = String(body.comercio ?? body.merchant ?? "").trim();
@@ -81,8 +93,11 @@ export async function POST(req: Request) {
   }
   if (fuente.length > 20) fuente = fuente.slice(0, 20);
 
-  if (!amount || amount <= 0) return json({ ok: false, error: "No encontré el monto" }, 400);
-  if (!url || !key) return json({ ok: false, error: "La app no está conectada a la base de datos" }, 500);
+  if (!amount || amount <= 0) {
+    await logAttempt(token, body, "sin monto");
+    return fail(`No encontré el monto (llegó: "${String(body.monto ?? "").slice(0, 40)}")`, 400);
+  }
+  if (!url || !key) return fail("La app no está conectada a la base de datos", 500);
 
   const { data, error } = await client().rpc("jh_ingest_v2", {
     p_token: token,
@@ -98,7 +113,8 @@ export async function POST(req: Request) {
   });
   if (error) {
     const bad = /Token inválido/i.test(error.message);
-    return json({ ok: false, error: bad ? "Token inválido: revisa el token en el Atajo" : error.message }, bad ? 401 : 500);
+    await logAttempt(token, body, "error: " + error.message);
+    return fail(bad ? "Token inválido: revisa el token en el Atajo" : error.message, bad ? 401 : 500);
   }
   const r = (data ?? {}) as { status?: string; cuenta?: string; negocio?: string; categoria?: string };
   const fmt = "$" + new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(amount);
@@ -107,5 +123,6 @@ export async function POST(req: Request) {
     r.status === "registrado" ? `✓ ${what} → ${r.negocio}${r.categoria ? " · " + r.categoria : ""} (${r.cuenta})`
     : r.status === "duplicado" ? `✓ ${what} ya estaba registrado`
     : `${what} quedó por clasificar en JH Finanzas`;
+  await logAttempt(token, body, `${r.status ?? "ok"}: ${mensaje}`);
   return json({ ok: true, estado: r.status, mensaje });
 }
