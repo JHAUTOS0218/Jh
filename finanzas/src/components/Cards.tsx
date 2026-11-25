@@ -96,6 +96,7 @@ export function CardForm({ info, onDone }: { info: CardInfo | null; onDone: () =
   const [rate, setRate] = useState(card?.card_fx_rate ? amountToInput(card.card_fx_rate) : "");
   const [cutDay, setCutDay] = useState(card?.cut_day ? String(card.cut_day) : "");
   const [payDay, setPayDay] = useState(card?.pay_day ? String(card.pay_day) : "");
+  const [monthly, setMonthly] = useState(amountToInput(card?.monthly_payment ?? 0));
   const [busy, setBusy] = useState(false);
 
   const day = (s: string) => (s ? Math.min(31, Math.max(1, parseInt(s, 10))) : null);
@@ -121,6 +122,7 @@ export function CardForm({ info, onDone }: { info: CardInfo | null; onDone: () =
       cut_day: day(cutDay),
       pay_day: day(payDay),
       card_fx_rate: parseAmount(rate) || null,
+      monthly_payment: parseAmount(monthly) || null,
       initial_balance: card ? card.initial_balance + (targetCOP - (balances[card.id] ?? 0)) : targetCOP,
     };
     let cardId = card?.id;
@@ -232,6 +234,11 @@ export function CardForm({ info, onDone }: { info: CardInfo | null; onDone: () =
           <label htmlFor="card-pay">Día límite de pago</label>
           <input id="card-pay" className="input num" inputMode="numeric" value={payDay} onChange={(e) => setPayDay(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="Opcional" />
         </div>
+      </div>
+
+      <div className="field">
+        <label htmlFor="card-monthly">Cuota que pagas cada mes (opcional)</label>
+        <input id="card-monthly" className="input num" inputMode="numeric" value={monthly} onChange={(e) => setMonthly(formatTyping(e.target.value))} placeholder="Para calcular tu costo de vida" />
       </div>
 
       {pLimit > 0 && (

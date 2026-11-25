@@ -95,7 +95,9 @@ export default function More() {
       <h3 className="h-section">Planeación</h3>
       <div className="list">
         <Item href="/mas/pagos-fijos" icon={<ICalendar size={20} />} label="Pagos fijos mensuales" />
-        <Item icon={<IPie size={20} />} label="Presupuestos" soon="Llega en la Fase 2" />
+        <Item href="/mas/presupuestos" icon={<IPie size={20} />} label="Presupuestos" />
+        <Item href="/mi-mes" icon={<ICalendar size={20} />} label="Mi mes (cuánto cuesta mi vida)" />
+        <Item href="/plan" icon={<ITarget size={20} />} label="Plan de la plata (recomendaciones)" />
         <Item icon={<ITarget size={20} />} label="Metas de ahorro" soon="Llega en la Fase 2" />
       </div>
 

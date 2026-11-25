@@ -11,6 +11,7 @@ import { daysUntilDue, debtDueDays, nextDueText } from "@/components/Debts";
 import { RecurringRow, recurringStatus, useRecurringSheets } from "@/components/Recurring";
 import { cardDueText } from "@/components/Cards";
 import { FlowCard } from "@/components/Flow";
+import { budgetSpent, monthlyCost } from "@/lib/plan";
 import { mineAtCost, saleOf } from "@/components/Assets";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
@@ -18,7 +19,7 @@ import { AccountIcon } from "@/components/AccountIcon";
 import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus, IInbox } from "@/components/Icons";
 
 export default function Home() {
-  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards, assets, pendingCount } = useData();
+  const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards, assets, pendingCount, budgets, accById } = useData();
   const { sheets: recSheets, edit: editRec, pay: payRec } = useRecurringSheets();
   const now = currentYM();
   const from = monthRange(addMonths(now, -5)).from;
@@ -69,6 +70,13 @@ export default function Home() {
     .map((r) => ({ r, st: recurringStatus(r) }))
     .sort((a, b) => a.st.days - b.st.days);
   const recUrgent = recPending.filter((x) => x.st.days <= 3);
+
+  const budgetAlerts = budgets
+    .filter((b) => !activeId || b.business_id === activeId)
+    .map((b) => ({ b, spent: budgetSpent(b, monthTxs) }))
+    .filter((x) => x.spent >= x.b.amount * 0.8);
+  const personalBiz = businesses.find((b) => /personal/i.test(b.name));
+  const lifeCost = monthlyCost({ businesses, recurring, debts, cards, budgets, catById, accById, toCOP }, personalBiz ? [personalBiz.id] : null).total;
 
   const lowAccounts = myAccounts.filter((a) => a.min_balance != null && (balances[a.id] ?? 0) < a.min_balance);
 
@@ -210,8 +218,29 @@ export default function Home() {
         </div>
       )}
 
+      {budgetAlerts.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          {budgetAlerts.map(({ b, spent }) => (
+            <Link key={b.id} href="/mas/presupuestos" className={"alert" + (spent >= b.amount ? " danger" : "")} style={{ display: "flex" }}>
+              <IAlert size={18} />
+              <span><b>{b.name || catById(b.category_id)?.name || "Presupuesto"}</b>: {spent >= b.amount ? "te pasaste" : `vas en el ${Math.round((spent / b.amount) * 100)}%`} · {money(spent)} de {money(b.amount)}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       {accounts.length > 0 && (
         <>
+          <div className="grid2" style={{ marginTop: 14 }}>
+            <Link href="/mi-mes" className="kpi">
+              <div className="k">Mi vida cuesta al mes</div>
+              <div className="v num">{money(lifeCost)}</div>
+            </Link>
+            <Link href="/plan" className="kpi profit">
+              <div className="k">Plan de la plata</div>
+              <div className="v" style={{ fontSize: 14 }}>Qué hacer con la ganancia →</div>
+            </Link>
+          </div>
           <h3 className="h-section">Flujo a 30 días</h3>
           <FlowCard />
         </>

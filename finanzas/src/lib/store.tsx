@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { sb } from "./supabase";
-import { DEFAULT_DEBT_CATEGORIES, type Account, type Asset, type CardInfo, type Business, type Category, type Currency, type Debt, type Recurring, type Settings, type Tx } from "./types";
+import { DEFAULT_DEBT_CATEGORIES, type Account, type Asset, type Budget, type CardInfo, type Business, type Category, type Currency, type Debt, type Recurring, type Settings, type Tx } from "./types";
 import { applySavedTheme, applyTheme, DEFAULT_THEME } from "./theme";
 
 interface Data {
@@ -25,6 +25,8 @@ interface Data {
   allDebts: Debt[];
   /** true si falta correr la actualización 02 en Supabase */
   needsDbUpdate: boolean;
+  /** presupuestos mensuales */
+  budgets: Budget[];
   /** movimientos que llegaron de Apple Pay / SMS y faltan por clasificar */
   pendingCount: number;
   /** activos (carros, motos, oro…) */
@@ -70,12 +72,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [categories, setCats] = useState<Category[]>([]);
   const [allAccounts, setAccs] = useState<Account[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
-  const [settings, setSettings] = useState<Settings>({ usd_rate: 4000, display_name: null, theme_color: DEFAULT_THEME, debt_categories: DEFAULT_DEBT_CATEGORIES });
+  const [settings, setSettings] = useState<Settings>({ usd_rate: 4000, display_name: null, theme_color: DEFAULT_THEME, debt_categories: DEFAULT_DEBT_CATEGORIES, plan: {} });
   const [allDebts, setDebts] = useState<Debt[]>([]);
   const [needsDbUpdate, setNeedsDbUpdate] = useState(false);
   const [allRecurring, setRecurring] = useState<Recurring[]>([]);
   const [allAssets, setAssets] = useState<Asset[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [recurringPaid, setRecurringPaid] = useState<Record<string, Tx>>({});
   const [needsRecurringUpdate, setNeedsRecurringUpdate] = useState(false);
   const [activeId, setActiveIdState] = useState<string | null>(null);
@@ -120,6 +123,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       c.from("assets").select("*").order("sort").order("created_at"),
     ]);
     const pend = await c.from("transactions").select("id", { count: "exact", head: true }).eq("status", "pending");
+    const bud = await c.from("budgets").select("*").order("sort").order("created_at");
+    if (!bud.error) setBudgets((bud.data as Budget[]).map((x) => ({ ...x, amount: Number(x.amount) })));
     setPendingCount(pend.count ?? 0);
     if (!ast.error) {
       setAssets((ast.data as Asset[]).map((x) => ({
@@ -136,7 +141,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       rows.map((r) => { const o = { ...r }; keys.forEach((k) => { if (o[k] != null) (o[k] as unknown) = Number(o[k]); }); return o; });
     setBiz(num(b.data as Business[], ["partner_share"]));
     setCats(cat.data as Category[]);
-    setAccs(num(a.data as Account[], ["initial_balance", "min_balance", "credit_limit", "overlimit_pct", "card_fx_rate"]));
+    setAccs(num(a.data as Account[], ["initial_balance", "min_balance", "credit_limit", "overlimit_pct", "card_fx_rate", "monthly_payment"]));
     const map: Record<string, number> = {};
     (bal.data as { account_id: string; balance: number }[]).forEach((r) => (map[r.account_id] = Number(r.balance)));
     setBalances(map);
@@ -146,6 +151,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         display_name: st.data.display_name,
         theme_color: st.data.theme_color || DEFAULT_THEME,
         debt_categories: st.data.debt_categories?.length ? st.data.debt_categories : DEFAULT_DEBT_CATEGORIES,
+        plan: st.data.plan ?? {},
       };
       setSettings(next);
       applyTheme(next.theme_color);
@@ -173,7 +179,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         (dbt.data as Debt[]).map((d) => {
           const total = Number(d.total_amount);
           const p = paid.get(d.id) ?? 0;
-          return { ...d, total_amount: total, installment: d.installment == null ? null : Number(d.installment), paid: p, remaining: Math.max(0, Math.round((total - p) * 100) / 100) };
+          return { ...d, total_amount: total, installment: d.installment == null ? null : Number(d.installment), interest_rate: d.interest_rate == null ? null : Number(d.interest_rate), paid: p, remaining: Math.max(0, Math.round((total - p) * 100) / 100) };
         })
       );
     }
@@ -250,6 +256,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       assets,
       allAssets,
       pendingCount,
+      budgets,
       recurring,
       allRecurring,
       recurringPaid,
@@ -268,7 +275,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       txDraft,
       closeTx: () => setTxDraft(undefined),
     };
-  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, moneyAccounts, cards, balances, settings, debts, allDebts, needsDbUpdate, assets, allAssets, pendingCount, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
+  }, [session, authChecked, loaded, businesses, allBusinesses, categories, accounts, allAccounts, moneyAccounts, cards, balances, settings, debts, allDebts, needsDbUpdate, assets, allAssets, pendingCount, budgets, recurring, allRecurring, recurringPaid, needsRecurringUpdate, activeId, setActiveId, version, refresh, bump, txDraft]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

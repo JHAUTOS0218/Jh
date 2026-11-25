@@ -71,6 +71,7 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
   const [installment, setInstallment] = useState(amountToInput(debt?.installment ?? 0, debt?.currency ?? "COP"));
   const [dueDay, setDueDay] = useState(debt?.due_day ? String(debt.due_day) : "");
   const [nextDue, setNextDue] = useState(debt?.next_due ?? "");
+  const [rate, setRate] = useState(debt?.interest_rate ? String(debt.interest_rate).replace(".", ",") : "");
   const [startDate, setStartDate] = useState(debt?.start_date ?? todayISO());
   const [note, setNote] = useState(debt?.note ?? "");
   const [moveMoney, setMoveMoney] = useState(false);
@@ -99,6 +100,7 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
       installment: parseAmount(installment, currency) || null,
       due_day: dueDay ? Math.min(31, Math.max(1, parseInt(dueDay, 10))) : null,
       next_due: nextDue || null,
+      interest_rate: rate ? Number(rate.replace(",", ".")) || null : null,
       start_date: startDate,
       note: note.trim() || null,
       excluded,
@@ -201,6 +203,10 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
           <label htmlFor="debt-day">Día de pago (1–31)</label>
           <input id="debt-day" className="input num" inputMode="numeric" value={dueDay} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="Opcional" />
         </div>
+      </div>
+      <div className="field">
+        <label htmlFor="debt-rate">Interés mensual % (opcional)</label>
+        <input id="debt-rate" className="input num" inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value.replace(/[^\d,.]/g, ""))} placeholder="Ej. 1,8 (vacío si no cobra interés)" />
       </div>
       <div className="field">
         <label htmlFor="debt-next">Próxima fecha de pago (fecha exacta, opcional)</label>

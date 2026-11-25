@@ -42,6 +42,8 @@ export interface Account {
   card_fx_rate?: number | null;
   /** si existe, esta cuenta es la parte en dólares de la tarjeta parent_id */
   parent_id?: string | null;
+  /** cuota que pagas cada mes de esta tarjeta (opcional) */
+  monthly_payment?: number | null;
 }
 
 /** Tarjeta de crédito con su deuda en pesos y (opcional) en dólares */
@@ -110,6 +112,8 @@ export interface Debt {
   start_date: string;
   note: string | null;
   archived: boolean;
+  /** interés mensual en % (opcional) */
+  interest_rate?: number | null;
   /** fecha exacta del próximo pago/cobro (yyyy-mm-dd) */
   next_due?: string | null;
   /** se guarda pero no suma en los totales (deuda inviable / aparte) */
@@ -140,11 +144,32 @@ export interface Asset {
 
 export const ASSET_CATEGORIES = ["Vehículo", "Moto", "Prendas en oro", "Inventario", "Inmueble", "Otro"];
 
+export interface PlanSettings {
+  /** cuánto te quieres pagar al mes (sueldo) */
+  salary?: number;
+  /** cuenta donde guardas el fondo de emergencia */
+  emergency_account_id?: string | null;
+  /** meses de costo de vida que quieres tener ahorrados */
+  emergency_months?: number;
+  /** % de lo que sobra para reinvertir en los negocios */
+  pct_reinvest?: number;
+}
+
 export interface Settings {
   usd_rate: number;
   display_name: string | null;
   theme_color: string;
   debt_categories: string[];
+  plan: PlanSettings;
+}
+
+export interface Budget {
+  id: string;
+  business_id: string;
+  category_id: string | null;
+  name: string | null;
+  amount: number;
+  sort: number;
 }
 
 export const DEFAULT_DEBT_CATEGORIES = ["Préstamo", "Venta a crédito", "Proveedor", "Tarjeta o crédito bancario", "Arriendo", "Otro"];
