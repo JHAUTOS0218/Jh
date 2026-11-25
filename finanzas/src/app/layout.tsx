@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   applicationName: "JH Finanzas",
   appleWebApp: { capable: true, title: "JH Finanzas", statusBarStyle: "black-translucent" },
   icons: {
-    icon: [{ url: "/icons/favicon-48.png", sizes: "48x48", type: "image/png" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    icon: [{ url: "/icons/favicon-48.png?v=3", sizes: "48x48", type: "image/png" }, { url: "/icons/icon-192.png?v=3", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png?v=3", sizes: "180x180" }],
   },
   formatDetection: { telephone: false },
   robots: { index: false, follow: false },
