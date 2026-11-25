@@ -11,13 +11,15 @@ import { AssetForm, AssetRow, SellForm, mineOf, profitOf, saleOf } from "@/compo
 import { IPlus, ITarget } from "@/components/Icons";
 
 export default function AssetsPage() {
-  const { assets, allAssets, activeId, active, businesses } = useData();
+  const { assets, allAssets, activeId, active, businesses, setActiveId, accById } = useData();
+  // en el negocio de capital (Inversiones JH) se ven los activos comprados con su plata
+  const inScope = (a: Asset) => !activeId || a.business_id === activeId || accById(a.funding_account_id ?? null)?.business_id === activeId;
   const [editing, setEditing] = useState<Asset | "new" | null>(null);
   const [selling, setSelling] = useState<Asset | null>(null);
   const [showSold, setShowSold] = useState(false);
 
-  const list = assets.filter((a) => !activeId || a.business_id === activeId);
-  const sold = allAssets.filter((a) => a.status === "sold" && (!activeId || a.business_id === activeId));
+  const list = assets.filter(inScope);
+  const sold = allAssets.filter((a) => a.status === "sold" && inScope(a));
 
   const cost = list.reduce((s, a) => s + a.cost, 0);
   const sale = list.reduce((s, a) => s + saleOf(a), 0);
@@ -46,7 +48,16 @@ export default function AssetsPage() {
         {others > 0 && <div className="sub" style={{ marginTop: 10 }}>De otras personas: {money(others)}</div>}
       </section>
 
-      {!list.length && (
+      {!list.length && assets.length > 0 && (
+        <div className="empty">
+          <div className="big-ico"><ITarget size={28} /></div>
+          <b>{active?.name} no tiene activos</b>
+          Tienes {assets.length} {assets.length === 1 ? "activo" : "activos"} en otros negocios.
+          <div style={{ marginTop: 14 }}><button className="btn small" onClick={() => setActiveId(null)}>Ver todos los negocios</button></div>
+        </div>
+      )}
+
+      {!assets.length && (
         <div className="empty">
           <div className="big-ico"><ITarget size={28} /></div>
           <b>Sin activos todavía</b>
