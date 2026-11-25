@@ -67,7 +67,7 @@ export default function Stats() {
           <div className="split"><span className="muted">{active.partner_name || "Socio"} ({active.partner_share}%)</span><b className="num">{money(sum.partnerShare)}</b></div>
           <div className="split"><span className="muted">Pagado al socio</span><b className="num">{money(sum.partnerPaid)}</b></div>
           <div className="split"><span className="muted">Pendiente por pagarle</span><b className="num">{money(Math.max(0, sum.partnerShare - sum.partnerPaid))}</b></div>
-          <div className="split"><span>Tu utilidad ({100 - active.partner_share}%)</span><b className="num" style={{ color: "var(--petrol-deep)" }}>{money(sum.myProfit)}</b></div>
+          <div className="split"><span>Tu utilidad ({100 - active.partner_share}%)</span><b className="num" style={{ color: "var(--accent)" }}>{money(sum.myProfit)}</b></div>
         </div>
       )}
 
@@ -76,7 +76,7 @@ export default function Stats() {
         {loading && !txs.length ? <div className="spinner" /> : <MonthBars data={bars} onPick={(i) => setYm(bars[i].ym)} />}
         <div className="split" style={{ marginTop: 8 }}>
           <span className="muted">Promedio mensual</span>
-          <b className="num" style={{ color: avgProfit < 0 ? "var(--expense)" : "var(--petrol-deep)" }}>{money(avgProfit)}</b>
+          <b className="num" style={{ color: avgProfit < 0 ? "var(--expense)" : "var(--accent)" }}>{money(avgProfit)}</b>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function Stats() {
                     <div className="t1">{b.name}</div>
                     <div className="t2 num">Ingresos {money(s.income)} · Egresos {money(s.expense)}</div>
                   </div>
-                  <div className={"amt num " + (s.myProfit < 0 ? "expense" : "")} style={s.myProfit >= 0 ? { color: "var(--petrol-deep)" } : undefined}>
+                  <div className={"amt num " + (s.myProfit < 0 ? "expense" : "")} style={s.myProfit >= 0 ? { color: "var(--accent)" } : undefined}>
                     {money(s.myProfit)}
                     {b.partner_share > 0 && <span className="s">tu parte</span>}
                   </div>

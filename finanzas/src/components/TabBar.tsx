@@ -13,16 +13,18 @@ export function TabBar() {
     <Link href={href} className={"tab" + (on(href) ? " on" : "")}>{icon}<span>{label}</span></Link>
   );
   return (
-    <nav className="tabbar">
-      <div className="inner">
-        {tab("/", <IHome />, "Inicio")}
-        {tab("/movimientos", <IList />, "Movimientos")}
-        {tab("/deudas", <IHandCoins />, "Deudas")}
-        <button className="fab" onClick={() => openTx()} aria-label="Registrar movimiento"><IPlus size={28} strokeWidth={2.2} /></button>
-        {tab("/activos", <ITarget />, "Activos")}
-        {tab("/estadisticas", <IChart />, "Estadísticas")}
-        {tab("/mas", <IGrid />, "Más")}
-      </div>
-    </nav>
+    <>
+      <button className="fab" onClick={() => openTx()} aria-label="Registrar movimiento"><IPlus size={28} strokeWidth={2.2} /></button>
+      <nav className="tabbar">
+        <div className="inner">
+          {tab("/", <IHome />, "Inicio")}
+          {tab("/movimientos", <IList />, "Movimientos")}
+          {tab("/deudas", <IHandCoins />, "Deudas")}
+          {tab("/activos", <ITarget />, "Activos")}
+          {tab("/estadisticas", <IChart />, "Reportes")}
+          {tab("/mas", <IGrid />, "Más")}
+        </div>
+      </nav>
+    </>
   );
 }

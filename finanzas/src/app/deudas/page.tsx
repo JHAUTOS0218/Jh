@@ -88,11 +88,11 @@ function Debts() {
       <h1 className="title" style={{ margin: "6px 2px 14px" }}>Deudas</h1>
 
       <div className="debt-sum">
-        <button className="box owed" style={{ textAlign: "left", outline: dir === "owed" ? "2px solid #1d7a5c" : "none" }} onClick={() => setDir("owed")}>
+        <button className="box owed" style={{ textAlign: "left", outline: dir === "owed" ? "2px solid var(--income)" : "none" }} onClick={() => setDir("owed")}>
           <div className="k">Me deben{active ? ` · ${active.name}` : ""}</div>
           <div className="v num">{money(totalOwed)}</div>
         </button>
-        <button className="box owe" style={{ textAlign: "left", outline: dir === "owe" ? "2px solid #b2463a" : "none" }} onClick={() => setDir("owe")}>
+        <button className="box owe" style={{ textAlign: "left", outline: dir === "owe" ? "2px solid var(--expense)" : "none" }} onClick={() => setDir("owe")}>
           <div className="k">Yo debo{active ? ` · ${active.name}` : ""}</div>
           <div className="v num">{money(totalOwe)}</div>
         </button>

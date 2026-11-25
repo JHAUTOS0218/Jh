@@ -10,6 +10,7 @@ import { TopBar } from "@/components/TopBar";
 import { daysUntilDue, debtDueDays, nextDueText } from "@/components/Debts";
 import { RecurringRow, recurringStatus, useRecurringSheets } from "@/components/Recurring";
 import { cardDueText } from "@/components/Cards";
+import { FlowCard } from "@/components/Flow";
 import { mineAtCost, saleOf } from "@/components/Assets";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
@@ -133,7 +134,7 @@ export default function Home() {
       )}
 
       {pendingCount > 0 && (
-        <Link href="/por-clasificar" className="alert" style={{ display: "flex", marginTop: 12, background: "var(--petrol-soft)", color: "var(--petrol-deep)" }}>
+        <Link href="/por-clasificar" className="alert" style={{ display: "flex", marginTop: 12, background: "var(--petrol-soft)", color: "var(--ink)" }}>
           <IInbox size={18} />
           <span style={{ flex: 1 }}><b>{pendingCount} {pendingCount === 1 ? "movimiento" : "movimientos"} por clasificar</b> (Apple Pay / SMS)</span>
           <b>Ver ›</b>
@@ -209,6 +210,13 @@ export default function Home() {
         </div>
       )}
 
+      {accounts.length > 0 && (
+        <>
+          <h3 className="h-section">Flujo a 30 días</h3>
+          <FlowCard />
+        </>
+      )}
+
       {!activeId && businesses.length > 0 && accounts.length > 0 && (
         <>
           <h3 className="h-section">Negocios</h3>
@@ -225,7 +233,7 @@ export default function Home() {
                   </div>
                   <div className="b num">{money(bal)}</div>
                   <div className="p muted">
-                    Utilidad del mes: <b className="num" style={{ color: s.myProfit < 0 ? "var(--expense)" : "var(--petrol-deep)" }}>{money(s.myProfit)}</b>
+                    Utilidad del mes: <b className="num" style={{ color: s.myProfit < 0 ? "var(--expense)" : "var(--accent)" }}>{money(s.myProfit)}</b>
                   </div>
                 </button>
               );
@@ -241,7 +249,7 @@ export default function Home() {
             <div className="split"><span className="muted">Utilidad del negocio</span><b className="num">{money(sum.profit)}</b></div>
             <div className="split"><span className="muted">{active.partner_name || "Socio"} ({active.partner_share}%)</span><b className="num">{money(sum.partnerShare)}</b></div>
             <div className="split"><span className="muted">Ya le pagaste este mes</span><b className="num">{money(sum.partnerPaid)}</b></div>
-            <div className="split"><span>Tu parte ({100 - active.partner_share}%)</span><b className="num" style={{ color: "var(--petrol-deep)" }}>{money(sum.myProfit)}</b></div>
+            <div className="split"><span>Tu parte ({100 - active.partner_share}%)</span><b className="num" style={{ color: "var(--accent)" }}>{money(sum.myProfit)}</b></div>
           </div>
         </>
       )}

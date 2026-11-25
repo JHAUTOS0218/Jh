@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useData, normalizeTx } from "@/lib/store";
 import { sb, errorText } from "@/lib/supabase";
 import { formatTyping, money, parseAmount, amountToInput, todayISO } from "@/lib/format";
 import { txsToCSV, downloadText } from "@/lib/csv";
-import { THEMES, applyTheme, isValidHex } from "@/lib/theme";
+import { THEMES, applyTheme, isValidHex, getMode, setMode, type Mode } from "@/lib/theme";
 import type { Tx } from "@/lib/types";
-import { Sheet, toast } from "@/components/ui";
+import { Seg, Sheet, toast } from "@/components/ui";
 import { BackBar } from "@/components/BackBar";
 import { BrandMark } from "@/components/BrandMark";
 import { DebtCategoriesEditor } from "@/components/Debts";
@@ -77,7 +77,7 @@ export default function More() {
 
       <h3 className="h-section">Personalizar</h3>
       <div className="list">
-        <Item onClick={() => setPanel("theme")} icon={<span style={{ width: 20, height: 20, borderRadius: 10, background: "var(--petrol)", display: "block" }} />} label="Color de la app" value={THEMES.find((t) => t.color.toLowerCase() === settings.theme_color.toLowerCase())?.name ?? "Personalizado"} />
+        <Item onClick={() => setPanel("theme")} icon={<span style={{ width: 20, height: 20, borderRadius: 10, background: "var(--petrol)", display: "block" }} />} label="Apariencia (modo y color)" value={THEMES.find((t) => t.color.toLowerCase() === settings.theme_color.toLowerCase())?.name ?? "Personalizado"} />
         <Item onClick={() => { setNameText(settings.display_name ?? ""); setPanel("name"); }} icon={<IEdit size={20} />} label="Tu nombre" value={settings.display_name || "—"} />
       </div>
 
@@ -148,8 +148,13 @@ export default function More() {
 
 function ThemePicker({ current, onPick }: { current: string; onPick: (c: string) => void }) {
   const [custom, setCustom] = useState(current);
+  const [mode, setModeState] = useState<Mode>("dark");
+  useEffect(() => setModeState(getMode()), []);
   return (
     <div>
+      <span className="lbl">Modo</span>
+      <Seg value={mode} onChange={(m) => { setModeState(m); setMode(m); }} options={[{ value: "dark", label: "Oscuro" }, { value: "light", label: "Claro" }]} />
+      <h3 className="h-section">Color de acento</h3>
       <p className="muted small" style={{ marginTop: 0 }}>Cambia el color principal: botones, tarjeta de Inicio, pestañas y gráficas. Se ve al instante.</p>
       <div className="color-grid">
         {THEMES.map((t) => (

@@ -80,36 +80,30 @@ export default function ShortcutsSetup() {
         </>
       )}
 
-      {token && (
-        <>
-          <CopyBox label="Dirección para el menú de cuentas" value={`${endpoint}?token=${token}&lista=cuentas`} />
-          <CopyBox label="Dirección para el menú de negocios" value={`${endpoint}?token=${token}&lista=negocios`} />
-        </>
-      )}
+      {token && <CopyBox label="Dirección para el menú de bolsillos" value={`${endpoint}?token=${token}&lista=cuentas`} />}
 
-      <h3 className="h-section">2 · Automatización de Apple Pay (con menú)</h3>
-      <p className="small muted" style={{ margin: "0 2px 8px" }}>Al pagar te pregunta la cuenta o bolsillo y el negocio. La categoría se pone sola y te llega una notificación con el resultado.</p>
+      <h3 className="h-section">2 · Automatización de Apple Pay (un solo menú)</h3>
+      <p className="small muted" style={{ margin: "0 2px 8px" }}>
+        Al pagar eliges el bolsillo o cuenta (cada uno dice su negocio, ej. “Oficina · JH Autos”). La categoría se pone sola. La app recuerda cada tarjeta y pone su cuenta de primera con ★.
+      </p>
       <ol className="small" style={{ paddingLeft: 20, lineHeight: 1.6, margin: 0 }}>
-        <li>Abre <b>Atajos</b> → <b>Automatización</b> → <b>+</b> → <b>Transacción</b>. Marca tus tarjetas → <b>Ejecutar inmediatamente</b> → <b>Siguiente</b> → <b>Nuevo atajo en blanco</b>.</li>
-        <li>Acción <b>Obtener contenido de URL</b> → pega la <b>Dirección para el menú de cuentas</b>.</li>
-        <li>Acción <b>Dividir texto</b> → separador: <b>Saltos de línea</b>.</li>
-        <li>Acción <b>Elegir de la lista</b> → texto: <i>¿De qué cuenta o bolsillo?</i></li>
-        <li>Acción <b>Obtener contenido de URL</b> → pega la <b>Dirección para el menú de negocios</b>.</li>
-        <li>Acción <b>Dividir texto</b> → <b>Saltos de línea</b>.</li>
-        <li>Acción <b>Elegir de la lista</b> → texto: <i>¿De qué negocio?</i></li>
-        <li>Acción <b>Obtener contenido de URL</b> → pega la <b>Dirección (URL)</b> de arriba → toca <b>›</b>: Método <b>POST</b>, Cuerpo <b>JSON</b>, con estos campos de tipo Texto:
+        <li><b>Atajos</b> → <b>Automatización</b> → <b>+</b> → <b>Transacción</b> → tus tarjetas → <b>Ejecutar inmediatamente</b> → <b>Nuevo atajo en blanco</b>.</li>
+        <li><b>Obtener contenido de URL</b> → pega la <b>Dirección para el menú de bolsillos</b>.</li>
+        <li><b>Dividir texto</b> → <b>Líneas nuevas</b>.</li>
+        <li><b>Elegir de la lista</b> → Mensaje: <i>¿De qué bolsillo?</i></li>
+        <li><b>Obtener contenido de URL</b> → la <b>Dirección (URL)</b> → <b>›</b> → Método <b>POST</b>, Cuerpo <b>JSON</b>. Campos de tipo <b>Texto</b> (no Número):
           <br />• <b>token</b> → tu token
-          <br />• <b>monto</b> → variable <i>Importe</i>
-          <br />• <b>comercio</b> → variable <i>Comercio</i>
-          <br />• <b>tarjeta</b> → variable <i>Tarjeta</i>
-          <br />• <b>cuenta</b> → el <i>Elemento elegido</i> del primer menú
-          <br />• <b>negocio</b> → el <i>Elemento elegido</i> del segundo menú
+          <br />• <b>monto</b> → <i>Entrada del atajo</i> → <i>Cantidad</i>
+          <br />• <b>comercio</b> → <i>Entrada del atajo</i> → <i>Comerciante</i>
+          <br />• <b>tarjeta</b> → <i>Entrada del atajo</i> → <i>Tarjeta o pase</i>
+          <br />• <b>cuenta</b> → <i>Elemento seleccionado</i> (del menú)
           <br />• <b>fuente</b> → escribe <b>applepay</b>
         </li>
-        <li>Acción <b>Obtener valor de diccionario</b> → clave <b>mensaje</b>.</li>
-        <li>Acción <b>Mostrar notificación</b> → el <i>Valor de diccionario</i>.</li>
+        <li><b>Obtener valor de diccionario</b> → clave <b>mensaje</b> → <b>Mostrar notificación</b> con ese valor.</li>
       </ol>
-      <p className="muted xsmall" style={{ marginTop: 8 }}>Si vas de afán, elige “Después” en los menús y queda en Por clasificar.</p>
+      <p className="muted xsmall" style={{ marginTop: 8 }}>
+        Si el monto llega en 0 (pasa con algunas tarjetas), la app lo completa sola con el SMS de Bancolombia de esa compra. Por eso conviene tener también la automatización de SMS.
+      </p>
 
       <h3 className="h-section">3 · Automatización de SMS de Bancolombia (sin menú)</h3>
       <ol className="small" style={{ paddingLeft: 20, lineHeight: 1.6, margin: 0 }}>

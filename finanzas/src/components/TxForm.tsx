@@ -24,7 +24,7 @@ export function TxForm() {
 }
 
 function FormBody() {
-  const { txDraft, closeTx, accounts, businesses, categories, activeId, accById, bump, refresh, settings } = useData();
+  const { txDraft, closeTx, accounts, businesses, categories, activeId, accById, bump, refresh, settings, session } = useData();
   const editing = !!txDraft?.id;
 
   const defaultAcc =
@@ -103,6 +103,11 @@ function FormBody() {
     const { error } = await q;
     setSaving(false);
     if (error) return toast(errorText(error));
+    // Si llegó de Apple Pay, recordar con qué cuenta va esa tarjeta
+    const card = txDraft?.raw_text?.match(/tarjeta: ([^\n·]+)/)?.[1]?.trim();
+    if (txDraft?.status === "pending" && card && session) {
+      await sb().from("card_accounts").upsert({ user_id: session.user.id, card_label: card, account_id: acc.id, updated_at: new Date().toISOString() }, { onConflict: "user_id,card_label" });
+    }
     toast(editing ? "Cambios guardados" : kind === "transfer" ? "Transferencia registrada" : kind === "income" ? "Ingreso registrado" : "Gasto registrado");
     closeTx();
     bump();
@@ -142,7 +147,7 @@ function FormBody() {
   return (
     <div>
       {txDraft?.status === "pending" && (
-        <div className="alert" style={{ background: "var(--petrol-soft)", color: "var(--petrol-deep)", marginBottom: 12, whiteSpace: "pre-line" }}>
+        <div className="alert" style={{ background: "var(--petrol-soft)", color: "var(--ink)", marginBottom: 12, whiteSpace: "pre-line" }}>
           <span>
             <b>Llegó automáticamente.</b> Elige la cuenta, el negocio y la categoría y toca Guardar.
             {txDraft.raw_text ? <span className="xsmall" style={{ display: "block", marginTop: 6, opacity: 0.8 }}>{txDraft.raw_text}</span> : null}
@@ -150,7 +155,7 @@ function FormBody() {
         </div>
       )}
       {isDebt ? (
-        <div className="alert" style={{ background: "var(--petrol-soft)", color: "var(--petrol-deep)" }}>
+        <div className="alert" style={{ background: "var(--petrol-soft)", color: "var(--ink)" }}>
           Este movimiento es parte de una deuda ({kind === "debt_in" ? "entró plata" : "salió plata"}). No cuenta como ingreso ni gasto.
           Puedes corregir el monto, la cuenta o la fecha.
         </div>

@@ -29,10 +29,10 @@ export function recurringStatus(r: Recurring, paid?: Tx): { state: RecState; day
 }
 
 const pillStyle: Record<RecState, React.CSSProperties> = {
-  paid: { background: "#e3f1ec", color: "#12523d" },
-  overdue: { background: "var(--expense-soft)", color: "#7c2a20" },
-  today: { background: "var(--expense-soft)", color: "#7c2a20" },
-  soon: { background: "var(--warn-soft)", color: "#6d4a0f" },
+  paid: { background: "var(--income-soft)", color: "var(--income-ink)" },
+  overdue: { background: "var(--expense-soft)", color: "var(--expense-ink)" },
+  today: { background: "var(--expense-soft)", color: "var(--expense-ink)" },
+  soon: { background: "var(--warn-soft)", color: "var(--warn-ink)" },
   later: { background: "var(--surface-2)", color: "var(--ink-2)" },
 };
 
@@ -205,9 +205,9 @@ export function RecurringForm({ rec, onDone }: { rec: Recurring | null; onDone: 
   return (
     <div>
       {paidTx && (
-        <div className="alert" style={{ background: "#e3f1ec", color: "#12523d", marginBottom: 14, justifyContent: "space-between", alignItems: "center" }}>
+        <div className="alert ok" style={{ marginBottom: 14, justifyContent: "space-between", alignItems: "center" }}>
           <span>✓ Este mes ya se pagó: {money(paidTx.amount, accById(paidTx.account_id)?.currency)} el {shortDate(paidTx.date)}.</span>
-          <button className="link-btn" style={{ color: "#7c2a20", fontSize: 13, flex: "none" }} onClick={undoPaid}>Deshacer</button>
+          <button className="link-btn" style={{ color: "var(--expense)", fontSize: 13, flex: "none" }} onClick={undoPaid}>Deshacer</button>
         </div>
       )}
       <Seg value={kind} onChange={setKind} options={[{ value: "expense", label: "Pago (gasto)", cls: "expense" }, { value: "income", label: "Cobro (ingreso)", cls: "income" }]} />

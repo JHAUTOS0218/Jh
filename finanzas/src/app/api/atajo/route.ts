@@ -42,7 +42,8 @@ export async function GET(req: Request) {
   const lista = (u.searchParams.get("lista") ?? "").toLowerCase();
   if (!lista) return json({ ok: true, mensaje: "JH Finanzas: usa ?lista=cuentas o ?lista=negocios, o envía un POST." });
   if (!token) return text("Falta el token", 401);
-  const { data, error } = await client().rpc("jh_ingest_lists", { p_token: token, p_what: lista.startsWith("neg") ? "negocios" : "cuentas" });
+  const tarjeta = (u.searchParams.get("tarjeta") ?? "").trim() || null;
+  const { data, error } = await client().rpc("jh_ingest_lists", { p_token: token, p_what: lista.startsWith("neg") ? "negocios" : "cuentas", p_card: tarjeta });
   if (error) return text(/Token inválido/i.test(error.message) ? "Token inválido" : error.message, /Token/i.test(error.message) ? 401 : 500);
   return text([SKIP, ...((data as string[]) ?? [])].join("\n"));
 }
@@ -93,9 +94,11 @@ export async function POST(req: Request) {
   }
   if (fuente.length > 20) fuente = fuente.slice(0, 20);
 
-  if (!amount || amount <= 0) {
-    await logAttempt(token, body, "sin monto");
-    return fail(`No encontré el monto (llegó: "${String(body.monto ?? "").slice(0, 40)}")`, 400);
+  // Apple Pay a veces manda el monto en 0: se guarda igual y el SMS de la misma compra lo completa
+  if (!amount || amount < 0) amount = 0;
+  if (!amount && !comercio && !texto) {
+    await logAttempt(token, body, "vacío");
+    return fail("No llegó ni monto ni comercio. Revisa los campos del Atajo", 400);
   }
   if (!url || !key) return fail("La app no está conectada a la base de datos", 500);
 
@@ -110,6 +113,7 @@ export async function POST(req: Request) {
     p_account: cuenta,
     p_business: negocio,
     p_category_hints: categoryHints(`${description} ${texto}`),
+    p_card: tarjeta || null,
   });
   if (error) {
     const bad = /Token inválido/i.test(error.message);
@@ -117,11 +121,13 @@ export async function POST(req: Request) {
     return fail(bad ? "Token inválido: revisa el token en el Atajo" : error.message, bad ? 401 : 500);
   }
   const r = (data ?? {}) as { status?: string; cuenta?: string; negocio?: string; categoria?: string };
-  const fmt = "$" + new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(amount);
-  const what = `${kind === "income" ? "Ingreso" : "Gasto"} de ${fmt}${description ? (kind === "income" ? " de " : " en ") + description : ""}`;
+  const fmt = amount ? "$" + new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(amount) : "";
+  const what = `${kind === "income" ? "Ingreso" : "Gasto"}${fmt ? " de " + fmt : ""}${description ? (kind === "income" ? " de " : " en ") + description : ""}`;
   const mensaje =
     r.status === "registrado" ? `✓ ${what} → ${r.negocio}${r.categoria ? " · " + r.categoria : ""} (${r.cuenta})`
     : r.status === "duplicado" ? `✓ ${what} ya estaba registrado`
+    : r.status === "completado" ? `✓ ${what}: monto completado con el SMS`
+    : r.status === "sin_monto" ? `${what} guardado${r.negocio ? " → " + r.negocio : ""}. El monto lo completa el SMS del banco (o ponlo en la app)`
     : `${what} quedó por clasificar en JH Finanzas`;
   await logAttempt(token, body, `${r.status ?? "ok"}: ${mensaje}`);
   return json({ ok: true, estado: r.status, mensaje });

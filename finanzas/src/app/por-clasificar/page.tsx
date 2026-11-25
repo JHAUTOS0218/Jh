@@ -76,7 +76,7 @@ export default function Inbox() {
                   <div className="t2">{dayLabel(t.date)} · {t.source === "sms" ? "SMS del banco" : t.source === "applepay" ? "Apple Pay" : t.source}</div>
                 </div>
                 <div className={"amt num " + t.kind}>
-                  {t.kind === "income" ? "+" : "-"}{money(t.amount)}
+                  {t.amount > 0 ? <>{t.kind === "income" ? "+" : "-"}{money(t.amount)}</> : <span style={{ color: "var(--warn)" }}>Falta monto</span>}
                   <span className="s" style={{ color: "var(--petrol)", fontWeight: 700 }}>Clasificar ›</span>
                 </div>
               </div>

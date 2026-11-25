@@ -167,7 +167,7 @@ export function DebtForm({ debt, defaultDirection, onDone }: { debt: Debt | null
             <span className="lbl" style={{ margin: 0 }}>{split ? `Parte ${i + 1}` : "Monto total"}</span>
             {split && parts.length > 1 && <button onClick={() => setParts(parts.filter((_, j) => j !== i))} aria-label="Quitar parte" style={{ color: "var(--muted)" }}><IClose size={18} /></button>}
           </div>
-          <input className="input num" style={{ marginTop: 6, background: "#fff", fontSize: 20, fontWeight: 700 }} inputMode={currency === "USD" ? "decimal" : "numeric"} value={p.amount} onChange={(e) => setPart(i, { amount: formatTyping(e.target.value, currency) })} placeholder={currency === "USD" ? "US$0" : "$0"} />
+          <input className="input num" style={{ marginTop: 6, background: "var(--surface)", fontSize: 20, fontWeight: 750 }} inputMode={currency === "USD" ? "decimal" : "numeric"} value={p.amount} onChange={(e) => setPart(i, { amount: formatTyping(e.target.value, currency) })} placeholder={currency === "USD" ? "US$0" : "$0"} />
           <div className="chips scroll" style={{ marginTop: 8 }}>
             {businesses.map((b) => (
               <button key={b.id} type="button" className={"chip" + (p.businessId === b.id ? " on" : " outline")} onClick={() => setPart(i, { businessId: b.id })}>

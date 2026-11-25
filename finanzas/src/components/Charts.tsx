@@ -24,7 +24,7 @@ export function MonthBars({ data, onPick }: { data: MonthBar[]; onPick?: (i: num
               {d.current && <rect x={colW * i + 3} y={4} width={colW - 6} height={H - 6} rx={10} fill="var(--surface)" />}
               <rect x={cx - bw - 1.5} y={y(d.income)} width={bw} height={Math.max(0, H - bottom - y(d.income))} rx={4} fill="var(--petrol)" />
               <rect x={cx + 1.5} y={y(d.expense)} width={bw} height={Math.max(0, H - bottom - y(d.expense))} rx={4} fill="var(--olive)" opacity={0.75} />
-              <text x={cx} y={16} textAnchor="middle" fontSize="10.5" fontWeight="700" fill={d.profit < 0 ? "var(--expense)" : "var(--petrol-deep)"}>
+              <text x={cx} y={16} textAnchor="middle" fontSize="10.5" fontWeight="700" fill={d.profit < 0 ? "var(--expense)" : "var(--accent)"}>
                 {d.income || d.expense ? moneyShort(d.profit) : ""}
               </text>
               <text x={cx} y={H - 7} textAnchor="middle" fontSize="11" fill={d.current ? "var(--ink)" : "var(--muted)"} fontWeight={d.current ? 700 : 400}>
@@ -37,7 +37,7 @@ export function MonthBars({ data, onPick }: { data: MonthBar[]; onPick?: (i: num
       <div className="chart-legend">
         <span><i style={{ background: "var(--petrol)" }} />Ingresos</span>
         <span><i style={{ background: "var(--olive)", opacity: 0.75 }} />Egresos</span>
-        <span style={{ fontWeight: 700, color: "var(--petrol-deep)" }}>$ = utilidad</span>
+        <span style={{ fontWeight: 700, color: "var(--accent)" }}>$ = utilidad</span>
       </div>
     </div>
   );
@@ -62,7 +62,7 @@ export function Donut({ data, total, label }: { data: CatSlice[]; total: number;
   };
   return (
     <svg viewBox="0 0 180 180" width="170" height="170" role="img" aria-label={label}>
-      {total > 0 ? arcs.map(({ s, a0, a1 }) => <path key={s.id} d={path(a0, a1)} fill={s.color} stroke="#fff" strokeWidth="1.5" />) : <circle cx={C} cy={C} r={(R + r) / 2} stroke="var(--surface-2)" strokeWidth={R - r} fill="none" />}
+      {total > 0 ? arcs.map(({ s, a0, a1 }) => <path key={s.id} d={path(a0, a1)} fill={s.color} stroke="var(--card)" strokeWidth="2" />) : <circle cx={C} cy={C} r={(R + r) / 2} stroke="var(--surface-2)" strokeWidth={R - r} fill="none" />}
       <text x={C} y={C - 4} textAnchor="middle" fontSize="10" fill="var(--muted)">{label}</text>
       <text x={C} y={C + 13} textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ink)">{moneyShort(total)}</text>
     </svg>

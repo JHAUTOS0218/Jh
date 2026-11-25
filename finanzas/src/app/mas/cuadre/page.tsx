@@ -60,8 +60,8 @@ export default function Reconcile() {
                 </div>
               ))}
               <div style={{ padding: "12px 14px", background: "var(--petrol-soft)" }}>
-                {hasCop && <div className="split" style={{ padding: "2px 0" }}><b>Total en {bank}</b><b className="num" style={{ fontSize: 17, color: "var(--petrol-deep)" }}>{money(cop)}</b></div>}
-                {hasUsd && <div className="split" style={{ padding: "2px 0", borderTop: 0 }}><b>{hasCop ? "Total en dólares" : `Total en ${bank}`}</b><b className="num" style={{ fontSize: 17, color: "var(--petrol-deep)" }}>{money(usd, "USD")}</b></div>}
+                {hasCop && <div className="split" style={{ padding: "2px 0" }}><b>Total en {bank}</b><b className="num" style={{ fontSize: 17, color: "var(--accent)" }}>{money(cop)}</b></div>}
+                {hasUsd && <div className="split" style={{ padding: "2px 0", borderTop: 0 }}><b>{hasCop ? "Total en dólares" : `Total en ${bank}`}</b><b className="num" style={{ fontSize: 17, color: "var(--accent)" }}>{money(usd, "USD")}</b></div>}
               </div>
             </div>
           </div>
