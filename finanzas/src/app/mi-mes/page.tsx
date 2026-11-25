@@ -48,14 +48,14 @@ export default function MyMonth() {
 
   return (
     <main className="page">
-      <BackBar title="Mi mes" fallback="/" />
+      <BackBar title="Costos fijos" fallback="/" />
       <p className="muted small" style={{ margin: "-6px 2px 14px" }}>
         Lo que cuesta {scope === "personal" ? "tu vida" : "todo (vida + negocios)"} cada mes: pagos fijos, cuotas de deudas y tarjetas, y tus presupuestos.
       </p>
       <Seg value={scope} onChange={setScope} options={[{ value: "personal", label: "Mi vida (Personal)" }, { value: "all", label: "Todo" }]} />
 
       <section className="hero" style={{ marginTop: 14 }}>
-        <div className="label">{scope === "personal" ? "Tu vida cuesta al mes" : "Todo cuesta al mes"}</div>
+        <div className="label">{scope === "personal" ? "Costos fijos personales" : "Costos fijos de todo"}</div>
         <div className="big num">{money(cost.total)}</div>
         <div className="sub">≈ {money(Math.round(cost.total / 30))} por día</div>
         <div className="pills">

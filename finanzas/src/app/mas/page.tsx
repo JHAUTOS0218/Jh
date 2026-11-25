@@ -96,7 +96,7 @@ export default function More() {
       <div className="list">
         <Item href="/mas/pagos-fijos" icon={<ICalendar size={20} />} label="Pagos fijos mensuales" />
         <Item href="/mas/presupuestos" icon={<IPie size={20} />} label="Presupuestos" />
-        <Item href="/mi-mes" icon={<ICalendar size={20} />} label="Mi mes (cuánto cuesta mi vida)" />
+        <Item href="/mi-mes" icon={<ICalendar size={20} />} label="Costos fijos del mes" />
         <Item href="/plan" icon={<ITarget size={20} />} label="Plan de la plata (recomendaciones)" />
         <Item icon={<ITarget size={20} />} label="Metas de ahorro" soon="Llega en la Fase 2" />
       </div>

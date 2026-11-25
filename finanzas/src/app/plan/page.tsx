@@ -51,7 +51,7 @@ export default function PlanPage() {
         <div className="big num">{loading && !monthTxs.length ? "…" : money(p.profit)}</div>
         <div className="sub">{p.profitByBiz.map((b) => `${b.name} ${money(b.profit)}`).join(" · ")}</div>
         <div className="pills">
-          <div className="pill"><div className="k">Tu costo de vida</div><div className="v num">{money(p.costOfLiving)}</div></div>
+          <div className="pill"><div className="k">Costos fijos</div><div className="v num">{money(p.costOfLiving)}</div></div>
           <div className="pill"><div className="k">Te sobra para repartir</div><div className="v num">{money(p.leftover)}</div></div>
         </div>
       </section>
@@ -94,7 +94,7 @@ export default function PlanPage() {
       {p.tips.map((t, i) => <div key={i} className={toneClass[t.tone]} style={{ marginTop: i ? 8 : 0 }}><span>{t.text}</span></div>)}
 
       <Link href="/mi-mes" className="row link card" style={{ marginTop: 16, borderRadius: 18 }}>
-        <div className="main"><div className="t1">Ver cuánto cuesta mi mes</div><div className="t2">Pagos fijos, cuotas, tarjetas y presupuestos</div></div>
+        <div className="main"><div className="t1">Ver mis costos fijos</div><div className="t2">Pagos fijos, cuotas, tarjetas y presupuestos</div></div>
         <IChevR size={18} className="chev" />
       </Link>
       <p className="muted xsmall" style={{ marginTop: 14 }}>

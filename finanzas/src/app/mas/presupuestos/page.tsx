@@ -25,7 +25,7 @@ export default function BudgetsPage() {
     <main className="page">
       <BackBar title="Presupuestos" right={<button className="btn small" onClick={() => setEditing("new")}><IPlus size={18} /> Nuevo</button>} />
       <p className="muted small" style={{ margin: "-6px 2px 12px" }}>
-        Cuánto quieres gastar al mes en cada cosa (gasolina, mercado, salidas, publicidad…). Te aviso al llegar al 80%. Se suman a tu costo de vida en “Mi mes”.
+        Cuánto quieres gastar al mes en cada cosa (gasolina, mercado, salidas, publicidad…). Te aviso al llegar al 80%. Se suman a tus costos fijos en “Costos fijos”.
       </p>
 
       {list.length > 0 && (

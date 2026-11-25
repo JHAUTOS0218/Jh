@@ -233,7 +233,7 @@ export default function Home() {
         <>
           <div className="grid2" style={{ marginTop: 14 }}>
             <Link href="/mi-mes" className="kpi">
-              <div className="k">Mi vida cuesta al mes</div>
+              <div className="k">Costos fijos del mes</div>
               <div className="v num">{money(lifeCost)}</div>
             </Link>
             <Link href="/plan" className="kpi profit">
