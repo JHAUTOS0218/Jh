@@ -115,12 +115,17 @@ function PlanForm({ onDone }: { onDone: () => void }) {
   const [months, setMonths] = useState(String(plan.emergency_months ?? 3));
   const [reinvest, setReinvest] = useState(String(plan.pct_reinvest ?? 20));
   const [accId, setAccId] = useState<string | null>(plan.emergency_account_id ?? null);
-  const [pick, setPick] = useState(false);
+  const [officeId, setOfficeId] = useState<string | null>(plan.office_account_id ?? null);
+  const [office, setOffice] = useState(amountToInput(plan.office_monthly ?? 0));
+  const [pick, setPick] = useState<null | "emergency" | "office">(null);
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
     setBusy(true);
     const next: PlanSettings = {
+      ...plan,
+      office_account_id: officeId,
+      office_monthly: parseAmount(office) || undefined,
       salary: parseAmount(salary) || undefined,
       emergency_months: Math.min(12, Math.max(1, parseInt(months, 10) || 3)),
       pct_reinvest: Math.min(80, Math.max(0, parseInt(reinvest, 10) || 0)),
@@ -142,7 +147,7 @@ function PlanForm({ onDone }: { onDone: () => void }) {
       </div>
       <div className="field">
         <span className="lbl">Cuenta o bolsillo del fondo de emergencia</span>
-        <button type="button" className="picker" onClick={() => setPick(true)}>
+        <button type="button" className="picker" onClick={() => setPick("emergency")}>
           <span className={accById(accId) ? "v" : "ph"}>{accById(accId)?.name ?? "Elegir cuenta"}</span>
           <IChevR size={18} className="chev" />
         </button>
@@ -157,8 +162,23 @@ function PlanForm({ onDone }: { onDone: () => void }) {
           <input id="plan-reinvest" className="input num" inputMode="numeric" value={reinvest} onChange={(e) => setReinvest(e.target.value.replace(/\D/g, "").slice(0, 2))} />
         </div>
       </div>
+      <h3 className="h-section">Oficina</h3>
+      <p className="muted small" style={{ marginTop: 0 }}>Cuando vendas un carro, la app aparta esta plata para la oficina si ese mes todavía no está completa.</p>
+      <div className="grid2">
+        <div className="field">
+          <span className="lbl">Bolsillo de la oficina</span>
+          <button type="button" className="picker" onClick={() => setPick("office")}>
+            <span className={accById(officeId) ? "v" : "ph"}>{accById(officeId)?.name ?? "Elegir"}</span>
+            <IChevR size={18} className="chev" />
+          </button>
+        </div>
+        <div className="field">
+          <label htmlFor="plan-office">Necesita al mes</label>
+          <input id="plan-office" className="input num" inputMode="numeric" value={office} onChange={(e) => setOffice(formatTyping(e.target.value))} placeholder="0" />
+        </div>
+      </div>
       <button className="btn" disabled={busy} onClick={save}>{busy ? "Guardando…" : "Guardar"}</button>
-      <AccountSheet open={pick} currency="COP" onClose={() => setPick(false)} onPick={(a) => { setAccId(a.id); setPick(false); }} />
+      <AccountSheet open={pick !== null} currency="COP" onClose={() => setPick(null)} onPick={(a) => { if (pick === "office") setOfficeId(a.id); else setAccId(a.id); setPick(null); }} />
     </div>
   );
 }

@@ -11,6 +11,8 @@ export interface Business {
   partner_share: number;
   sort: number;
   archived: boolean;
+  /** bolsillo donde se guardan las ganancias del negocio */
+  profit_account_id?: string | null;
 }
 
 export interface Category {
@@ -140,6 +142,8 @@ export interface Asset {
   sold_price: number | null;
   sold_date: string | null;
   sort: number;
+  /** cuenta/bolsillo con que se compró (al vender, el costo vuelve ahí) */
+  funding_account_id?: string | null;
 }
 
 export const ASSET_CATEGORIES = ["Vehículo", "Moto", "Prendas en oro", "Inventario", "Inmueble", "Otro"];
@@ -153,6 +157,9 @@ export interface PlanSettings {
   emergency_months?: number;
   /** % de lo que sobra para reinvertir en los negocios */
   pct_reinvest?: number;
+  /** bolsillo de la oficina y cuánto necesita al mes (lo paga JH Autos con sus ventas) */
+  office_account_id?: string | null;
+  office_monthly?: number;
 }
 
 export interface Settings {

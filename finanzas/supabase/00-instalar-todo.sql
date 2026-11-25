@@ -656,6 +656,12 @@ alter table public.accounts add column if not exists monthly_payment numeric(16,
 -- Preferencias del plan: sueldo, % de ahorro, cuenta del fondo de emergencia, etc.
 alter table public.settings add column if not exists plan jsonb not null default '{}'::jsonb;
 
+
+-- Bolsillo donde se guardan las ganancias de cada negocio (ej. JH Autos → bolsillo "JH Autos")
+alter table public.businesses add column if not exists profit_account_id uuid references public.accounts on delete set null;
+-- Con qué cuenta/bolsillo se compró cada activo (al venderlo, el costo vuelve ahí)
+alter table public.assets add column if not exists funding_account_id uuid references public.accounts on delete set null;
+
 -- Permisos para el usuario que inicia sesión (los proyectos nuevos de Supabase no los dan por defecto).
 -- La seguridad por fila (RLS) sigue limitando cada tabla a los datos de su dueño.
 grant usage on schema public to authenticated;

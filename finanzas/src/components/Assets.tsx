@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useData } from "@/lib/store";
 import { sb, errorText } from "@/lib/supabase";
-import { amountToInput, formatTyping, money, parseAmount, todayISO } from "@/lib/format";
+import { amountToInput, currentYM, formatTyping, money, monthRange, parseAmount, todayISO } from "@/lib/format";
 import { ASSET_CATEGORIES, type Asset } from "@/lib/types";
 import { Sheet, toast } from "./ui";
 import { AccountSheet } from "./TxForm";
@@ -55,7 +55,11 @@ export function AssetRow({ a, onOpen }: { a: Asset; onOpen: () => void }) {
 //  Crear / editar activo
 // ------------------------------------------------------------------
 export function AssetForm({ asset, onDone, onSell }: { asset: Asset | null; onDone: () => void; onSell: () => void }) {
-  const { businesses, activeId, allAssets, bump } = useData();
+  const { businesses, activeId, allAssets, bump, accById, moneyAccounts } = useData();
+  const capBiz = businesses.find((b) => /inversiones/i.test(b.name));
+  const [fundId, setFundId] = useState<string | null>(asset ? asset.funding_account_id ?? null : moneyAccounts.find((a) => a.business_id === capBiz?.id && a.currency === "COP")?.id ?? null);
+  const [payNow, setPayNow] = useState(false);
+  const [pickFund, setPickFund] = useState(false);
   const [name, setName] = useState(asset?.name ?? "");
   const [businessId, setBusinessId] = useState(asset?.business_id ?? activeId ?? businesses[0]?.id);
   const [category, setCategory] = useState(asset?.category ?? defaultCategory(businesses.find((b) => b.id === (asset?.business_id ?? activeId ?? businesses[0]?.id))?.name));
@@ -84,10 +88,19 @@ export function AssetForm({ asset, onDone, onSell }: { asset: Asset | null; onDo
       name: name.trim(), category, business_id: businessId, cost: c, sale_price: s || null,
       detail: detail.trim() || null, note: note.trim() || null, acquired_date: date || null,
       partner_name: hasPartner ? partnerName.trim() || "Socio" : null, partner_amount: hasPartner ? pa || null : null,
+      funding_account_id: fundId,
     };
     const { error } = asset
       ? await sb().from("assets").update(row).eq("id", asset.id)
       : await sb().from("assets").insert({ ...row, sort: allAssets.length });
+    if (!error && !asset && payNow && fundId && c - pa > 0) {
+      // la plata sale de la cuenta con que se compró (no es gasto: es capital invertido)
+      const r = await sb().from("transactions").insert({
+        kind: "debt_out", date: date || todayISO(), amount: c - pa, account_id: fundId, business_id: businessId,
+        status: "confirmed", description: `Compra ${name.trim()}`,
+      });
+      if (r.error) toast(errorText(r.error));
+    }
     setBusy(false);
     if (error) return toast(/assets/.test(error.message) ? "Falta actualizar la base de datos (06-activos.sql)." : errorText(error));
     toast(asset ? "Activo actualizado" : "Activo agregado");
@@ -161,6 +174,24 @@ export function AssetForm({ asset, onDone, onSell }: { asset: Asset | null; onDo
         <div className="field"><label htmlFor="as-note">Nota</label><input id="as-note" className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" /></div>
       </div>
 
+      <div className="field">
+        <span className="lbl">¿Con qué plata se compró?</span>
+        <button type="button" className="picker" onClick={() => setPickFund(true)}>
+          <span className={accById(fundId) ? "v" : "ph"}>{accById(fundId)?.name ?? "Elegir cuenta o bolsillo"}</span>
+          <IChevR size={18} className="chev" />
+        </button>
+        <p className="muted xsmall" style={{ margin: "6px 2px 0" }}>Al venderlo, la app te propone devolver el costo ahí.</p>
+      </div>
+      {!asset && fundId && (
+        <div className="field">
+          <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "var(--ink)", fontWeight: 400 }}>
+            <input type="checkbox" checked={payNow} onChange={(e) => setPayNow(e.target.checked)} style={{ marginTop: 3 }} />
+            <span>Lo acabo de comprar: descontar {money(Math.max(0, c - pa))} de {accById(fundId)?.name}</span>
+          </label>
+        </div>
+      )}
+      <AccountSheet open={pickFund} currency="COP" onClose={() => setPickFund(false)} onPick={(a) => { setFundId(a.id); setPickFund(false); }} />
+
       {c > 0 && (
         <div className="card soft" style={{ marginBottom: 14 }}>
           <div className="split" style={{ paddingTop: 0 }}><span className="muted">Utilidad esperada</span><b className="num" style={{ color: (s || c) - c < 0 ? "var(--expense)" : "var(--income)" }}>{money((s || c) - c, "COP", { sign: true })}</b></div>
@@ -177,15 +208,30 @@ export function AssetForm({ asset, onDone, onSell }: { asset: Asset | null; onDo
 }
 
 // ------------------------------------------------------------------
-//  Marcar vendido: registra la plata que entró y la parte del socio
+//  Vender: la plata entra al disponible y la app propone repartirla
 // ------------------------------------------------------------------
+type Line = { key: string; label: string; hint: string; to: string | null | undefined; amount: number };
+
 export function SellForm({ asset, onDone }: { asset: Asset; onDone: () => void }) {
-  const { accounts, accById, categories, bump, bizById } = useData();
+  const { moneyAccounts, accById, categories, bump, bizById, settings, businesses } = useData();
+  const biz = bizById(asset.business_id);
+  const plan = settings.plan ?? {};
+  const capitalAcc = businesses.find((b) => /inversiones/i.test(b.name));
+  const fundingId = asset.funding_account_id ?? moneyAccounts.find((a) => a.business_id === capitalAcc?.id && a.currency === "COP")?.id ?? null;
+  const officeAcc = accById(plan.office_account_id ?? null);
+  const officePays = !!officeAcc && officeAcc.business_id === asset.business_id && (plan.office_monthly ?? 0) > 0;
+
+  const [step, setStep] = useState<1 | 2>(1);
   const [price, setPrice] = useState(amountToInput(saleOf(asset)));
   const [date, setDate] = useState(todayISO());
-  const [accountId, setAccountId] = useState<string | undefined>(accounts.find((a) => a.business_id === asset.business_id && a.type !== "card")?.id);
-  const [mode, setMode] = useState<"profit" | "full" | "none">("profit");
+  const [accountId, setAccountId] = useState<string | undefined>(
+    (moneyAccounts.find((a) => /disponible/i.test(a.name) && a.currency === "COP") ??
+      moneyAccounts.find((a) => a.business_id === asset.business_id && a.currency === "COP"))?.id
+  );
+  const [record, setRecord] = useState(true);
   const [partnerDebt, setPartnerDebt] = useState(!!asset.partner_amount);
+  const [officeDone, setOfficeDone] = useState(0);
+  const [edits, setEdits] = useState<Record<string, string>>({});
   const [pick, setPick] = useState(false);
   const [busy, setBusy] = useState(false);
   const acc = accById(accountId);
@@ -197,31 +243,59 @@ export function SellForm({ asset, onDone }: { asset: Asset; onDone: () => void }
     [categories, asset.business_id]
   );
 
+  // lo que ya se pasó a la oficina este mes
+  useEffect(() => {
+    if (!officePays || !officeAcc) return;
+    const { from, to } = monthRange(currentYM());
+    sb().from("transactions").select("to_amount,amount").eq("kind", "transfer").eq("to_account_id", officeAcc.id).eq("status", "confirmed")
+      .gte("date", from).lte("date", to)
+      .then(({ data }) => setOfficeDone((data ?? []).reduce((t, r) => t + Number(r.to_amount ?? r.amount ?? 0), 0)));
+  }, [officePays, officeAcc]);
+
+  // propuesta de reparto
+  const pa = Math.min(asset.partner_amount ?? 0, value);
+  const bizShare = profit > 0 && biz?.partner_share ? Math.round((profit * biz.partner_share) / 100) : 0;
+  const officeNeed = officePays ? Math.max(0, (plan.office_monthly ?? 0) - officeDone) : 0;
+  const proposal: Line[] = [
+    { key: "cost", label: "Costo de vuelta", hint: "Recupera la plata con que se compró", to: fundingId, amount: Math.max(0, Math.min(value, asset.cost) - pa) },
+    ...(officePays ? [{ key: "office", label: "Oficina del mes", hint: officeDone ? `Ya tiene ${money(officeDone)} de ${money(plan.office_monthly ?? 0)} este mes` : `${money(plan.office_monthly ?? 0)} al mes`, to: officeAcc!.id, amount: Math.min(officeNeed, Math.max(0, profit - bizShare)) }] : []),
+  ];
+  const lines: Line[] = proposal.map((l) => ({ ...l, amount: edits[l.key] !== undefined ? parseAmount(edits[l.key]) : l.amount }));
+  const used = lines.reduce((t, l) => t + l.amount, 0);
+  const gain = Math.max(0, value - used - pa - bizShare);
+  const profitTo = biz?.profit_account_id ?? null;
+  lines.push({ key: "profit", label: "Ganancia", hint: profitTo ? "Para el bolsillo del negocio" : "Elige el bolsillo de ganancias en Más → Negocios", to: profitTo, amount: gain });
+  const keep = value - lines.filter((l) => l.to && l.to !== accountId).reduce((t, l) => t + l.amount, 0);
+  const over = used + pa + bizShare > value;
+
   const save = async () => {
     if (!value) return;
-    if (mode !== "none" && !acc) return toast("Elige la cuenta donde entró la plata");
+    if (record && !acc) return toast("Elige la cuenta donde entró la plata");
+    if (record && over) return toast("El reparto suma más que la venta");
     setBusy(true);
     const c = sb();
-    const txs: Record<string, unknown>[] = [];
-    const base = { date, account_id: acc?.id, business_id: asset.business_id };
-    if (mode === "full") {
-      txs.push({ ...base, kind: "income", amount: value, category_id: saleCat?.id ?? null, description: `Venta ${asset.name}` });
-    } else if (mode === "profit") {
-      // la parte que era costo vuelve como capital (no es ingreso); solo la utilidad es ingreso
-      const capital = Math.min(value, asset.cost);
-      if (capital > 0) txs.push({ ...base, kind: "debt_in", amount: capital, description: `Recuperación de capital · ${asset.name}` });
+    if (record && acc) {
+      const base = { date, account_id: acc.id, business_id: asset.business_id, status: "confirmed" };
+      const txs: Record<string, unknown>[] = [];
+      // el costo vuelve como capital (no es ingreso); la utilidad sí es ingreso
+      if (asset.cost > 0) txs.push({ ...base, kind: "debt_in", amount: asset.cost, description: `Recuperación de capital · ${asset.name}` });
       if (profit > 0) txs.push({ ...base, kind: "income", amount: profit, category_id: saleCat?.id ?? null, description: `Utilidad venta ${asset.name}` });
       if (profit < 0) txs.push({ ...base, kind: "expense", amount: -profit, description: `Pérdida venta ${asset.name}` });
-    }
-    if (txs.length) {
+      for (const l of lines) {
+        if (!l.to || l.to === acc.id || l.amount <= 0) continue;
+        txs.push({ date, kind: "transfer", account_id: acc.id, to_account_id: l.to, amount: l.amount, to_amount: l.amount, business_id: null, status: "confirmed", description: `${l.label} · venta ${asset.name}` });
+      }
       const { error } = await c.from("transactions").insert(txs);
       if (error) { setBusy(false); return toast(errorText(error)); }
     }
-    if (partnerDebt && asset.partner_amount && asset.partner_name) {
-      await c.from("debts").insert({
-        direction: "owe", person: asset.partner_name, description: `Su parte de la venta · ${asset.name}`,
-        category: "Familia", business_id: asset.business_id, total_amount: asset.partner_amount, start_date: date,
-      });
+    const debts: Record<string, unknown>[] = [];
+    if (partnerDebt && pa > 0 && asset.partner_name)
+      debts.push({ direction: "owe", person: asset.partner_name, description: `Su parte de la venta · ${asset.name}`, category: "Familia", business_id: asset.business_id, total_amount: pa, start_date: date });
+    if (bizShare > 0)
+      debts.push({ direction: "owe", person: biz?.partner_name || "Socio", description: `${biz?.partner_share}% de la utilidad · ${asset.name}`, category: "Otro", business_id: asset.business_id, total_amount: bizShare, start_date: date });
+    if (debts.length) {
+      const { error } = await c.from("debts").insert(debts);
+      if (error) { setBusy(false); return toast(errorText(error)); }
     }
     const { error } = await c.from("assets").update({ status: "sold", sold_price: value, sold_date: date }).eq("id", asset.id);
     setBusy(false);
@@ -231,7 +305,7 @@ export function SellForm({ asset, onDone }: { asset: Asset; onDone: () => void }
     onDone();
   };
 
-  return (
+  if (step === 1) return (
     <div>
       <div className="field">
         <label htmlFor="sell-price">Precio final de venta</label>
@@ -239,42 +313,67 @@ export function SellForm({ asset, onDone }: { asset: Asset; onDone: () => void }
         <p className="muted xsmall" style={{ margin: "6px 2px 0" }}>Costo {money(asset.cost)} → utilidad <b style={{ color: profit < 0 ? "var(--expense)" : "var(--income)" }}>{money(profit, "COP", { sign: true })}</b></p>
       </div>
       <div className="field"><label htmlFor="sell-date">Fecha</label><input id="sell-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value || todayISO())} /></div>
-
       <div className="field">
-        <span className="lbl">¿Cómo registro la plata?</span>
-        <div className="list">
-          {([
-            ["profit", "Solo la utilidad como ingreso", "Recomendado si la compra no está registrada como gasto en la app. El costo vuelve como capital."],
-            ["full", "Toda la venta como ingreso", "Úsalo si la compra ya la registraste como gasto (ej. Compra de vehículo)."],
-            ["none", "No registrar plata", "Solo marcarlo como vendido."],
-          ] as const).map(([v, t, d]) => (
-            <button key={v} type="button" className="row link" onClick={() => setMode(v)} style={{ alignItems: "flex-start" }}>
-              <input type="radio" readOnly checked={mode === v} style={{ marginTop: 4 }} />
-              <div className="main"><div className="t1" style={{ whiteSpace: "normal" }}>{t}</div><div className="t2" style={{ whiteSpace: "normal" }}>{d}</div></div>
-            </button>
-          ))}
-        </div>
+        <span className="lbl">¿A qué cuenta entró la plata?</span>
+        <button type="button" className="picker" onClick={() => setPick(true)}>
+          {acc ? <><AccountIcon type={acc.type} size={34} /><span className="v">{acc.name}</span></> : <span className="ph">Elige la cuenta</span>}
+          <IChevR size={18} className="chev" />
+        </button>
       </div>
-      {mode !== "none" && (
-        <div className="field">
-          <span className="lbl">¿A qué cuenta entró?</span>
-          <button type="button" className="picker" onClick={() => setPick(true)}>
-            {acc ? <><AccountIcon type={acc.type} size={34} /><span className="v">{acc.name}</span></> : <span className="ph">Elige la cuenta</span>}
-            <IChevR size={18} className="chev" />
-          </button>
-        </div>
-      )}
-      {asset.partner_amount && asset.partner_name ? (
+      <div className="field">
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "var(--ink)", fontWeight: 400 }}>
+          <input type="checkbox" checked={!record} onChange={(e) => setRecord(!e.target.checked)} style={{ marginTop: 3 }} />
+          <span>Solo marcarlo como vendido (la plata ya la registré)</span>
+        </label>
+      </div>
+      {record
+        ? <button className="btn" disabled={!value || !acc} onClick={() => setStep(2)}>Siguiente: repartir la plata</button>
+        : <button className="btn" disabled={!value || busy} onClick={save}>{busy ? "Guardando…" : "Marcar vendido"}</button>}
+      <p className="muted xsmall" style={{ marginTop: 10 }}>Negocio: {biz?.name}</p>
+      <AccountSheet open={pick} currency="COP" onClose={() => setPick(false)} onPick={(a) => { setAccountId(a.id); setPick(false); }} />
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="hero" style={{ padding: 16, marginBottom: 14 }}>
+        <div className="label">Entran a {acc?.name}</div>
+        <div className="big num" style={{ fontSize: 26 }}>{money(value)}</div>
+        <div className="sub">Utilidad {money(profit, "COP", { sign: true })}</div>
+      </div>
+      <p className="muted small" style={{ marginTop: 0 }}>Haz estas transferencias en Bancolombia, desde el disponible a cada bolsillo. Puedes cambiar los valores.</p>
+      <div className="list" style={{ marginBottom: 12 }}>
+        {lines.map((l) => (
+          <div key={l.key} className="row" style={{ alignItems: "center", gap: 10 }}>
+            <div className="main">
+              <div className="t1" style={{ whiteSpace: "normal" }}>{l.label} → {accById(l.to ?? null)?.name ?? "queda en el disponible"}</div>
+              <div className="t2" style={{ whiteSpace: "normal" }}>{l.hint}</div>
+            </div>
+            {l.key === "profit"
+              ? <b className="num" style={{ color: "var(--income)" }}>{money(l.amount)}</b>
+              : <input aria-label={l.label} className="input num" style={{ width: 130, height: 40, textAlign: "right" }} inputMode="numeric"
+                  value={edits[l.key] ?? amountToInput(l.amount)} onChange={(e) => setEdits({ ...edits, [l.key]: formatTyping(e.target.value) })} />}
+          </div>
+        ))}
+        {pa > 0 && (
+          <div className="row"><div className="main"><div className="t1">Parte de {asset.partner_name}</div><div className="t2">Queda en el disponible para pagarle</div></div><b className="num">{money(pa)}</b></div>
+        )}
+        {bizShare > 0 && (
+          <div className="row"><div className="main"><div className="t1">{biz?.partner_share}% de {biz?.partner_name || "tu socio"}</div><div className="t2">Queda en el disponible y anotado en Deudas</div></div><b className="num">{money(bizShare)}</b></div>
+        )}
+        <div className="row"><div className="main"><div className="t1">Queda en {acc?.name}</div></div><b className="num">{money(keep)}</b></div>
+      </div>
+      {over && <div className="alert danger" style={{ marginBottom: 12 }}><span>El reparto suma más que la venta. Baja algún valor.</span></div>}
+      {pa > 0 && asset.partner_name && (
         <div className="field">
           <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "var(--ink)", fontWeight: 400 }}>
             <input type="checkbox" checked={partnerDebt} onChange={(e) => setPartnerDebt(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>Anotar que le debo {money(asset.partner_amount)} a {asset.partner_name} (queda en Deudas → Yo debo)</span>
+            <span>Anotar que le debo {money(pa)} a {asset.partner_name} (Deudas → Yo debo)</span>
           </label>
         </div>
-      ) : null}
-      <button className="btn" disabled={!value || busy} onClick={save}>{busy ? "Guardando…" : "Marcar vendido"}</button>
-      <p className="muted xsmall" style={{ marginTop: 10 }}>Negocio: {bizById(asset.business_id)?.name}</p>
-      <AccountSheet open={pick} currency="COP" onClose={() => setPick(false)} onPick={(a) => { setAccountId(a.id); setPick(false); }} />
+      )}
+      <button className="btn" disabled={busy || over} onClick={save}>{busy ? "Guardando…" : "Confirmar venta y reparto"}</button>
+      <button className="btn secondary" style={{ marginTop: 10 }} onClick={() => setStep(1)}>Atrás</button>
     </div>
   );
 }

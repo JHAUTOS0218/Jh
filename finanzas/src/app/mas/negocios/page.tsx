@@ -8,6 +8,7 @@ import { BackBar } from "@/components/BackBar";
 import { BizDot } from "@/components/Business";
 import { Seg, Sheet, toast } from "@/components/ui";
 import { IPlus, IChevR, IEdit, IArchive } from "@/components/Icons";
+import { AccountSheet } from "@/components/TxForm";
 
 const COLORS = ["#1E5B5A", "#6E7B3C", "#2F7F86", "#A88A3D", "#3C4F63", "#B0703F", "#4E6E66", "#5B4E7A", "#8C2F39", "#2D3B3A"];
 
@@ -45,7 +46,9 @@ export default function Businesses() {
 }
 
 function BusinessForm({ biz, onDone }: { biz: Business | null; onDone: () => void }) {
-  const { categories, allBusinesses, bump } = useData();
+  const { categories, allBusinesses, bump, accById } = useData();
+  const [profitAcc, setProfitAcc] = useState<string | null>(biz?.profit_account_id ?? null);
+  const [pickAcc, setPickAcc] = useState(false);
   const [name, setName] = useState(biz?.name ?? "");
   const [color, setColor] = useState(biz?.color ?? COLORS[allBusinesses.length % COLORS.length]);
   const [hasPartner, setHasPartner] = useState((biz?.partner_share ?? 0) > 0);
@@ -66,6 +69,7 @@ function BusinessForm({ biz, onDone }: { biz: Business | null; onDone: () => voi
       color,
       partner_name: hasPartner ? partnerName.trim() || "Socio" : null,
       partner_share: hasPartner ? Math.min(100, Math.max(0, Number(share.replace(",", ".")) || 0)) : 0,
+      ...(biz ? { profit_account_id: profitAcc } : {}),
     };
     if (biz) {
       const { error } = await sb().from("businesses").update(row).eq("id", biz.id);
@@ -147,6 +151,17 @@ function BusinessForm({ biz, onDone }: { biz: Business | null; onDone: () => voi
         <div className="grid2">
           <div className="field"><label>Nombre del socio</label><input className="input" value={partnerName} onChange={(e) => setPartnerName(e.target.value)} placeholder="Socio" /></div>
           <div className="field"><label>% de la utilidad</label><input className="input num" inputMode="decimal" value={share} onChange={(e) => setShare(e.target.value.replace(/[^\d,.]/g, ""))} /></div>
+        </div>
+      )}
+      {biz && (
+        <div className="field">
+          <span className="lbl">Bolsillo de ganancias</span>
+          <button type="button" className="picker" onClick={() => setPickAcc(true)}>
+            <span className={accById(profitAcc) ? "v" : "ph"}>{accById(profitAcc)?.name ?? "Elegir bolsillo"}</span>
+            <IChevR size={18} className="chev" />
+          </button>
+          <p className="muted xsmall" style={{ margin: "6px 2px 0" }}>Cuando vendas algo de este negocio, la app te propone pasar la ganancia aquí.</p>
+          <AccountSheet open={pickAcc} currency="COP" onClose={() => setPickAcc(false)} onPick={(a) => { setProfitAcc(a.id); setPickAcc(false); }} />
         </div>
       )}
       <button className="btn" disabled={busy || !name.trim()} onClick={save}>{busy ? "Guardando…" : biz ? "Guardar cambios" : "Crear negocio"}</button>
