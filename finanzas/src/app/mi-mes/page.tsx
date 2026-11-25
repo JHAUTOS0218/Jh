@@ -12,8 +12,10 @@ import { Seg } from "@/components/ui";
 export default function MyMonth() {
   const d = useData();
   const personal = d.businesses.find((b) => /personal/i.test(b.name));
-  const [scope, setScope] = useState<"personal" | "all">("personal");
-  const ids = scope === "personal" && personal ? [personal.id] : null;
+  const autos = d.businesses.find((b) => /autos/i.test(b.name));
+  const [scope, setScope] = useState<"personal" | "autos" | "all">("personal");
+  const ids = scope === "personal" && personal ? [personal.id] : scope === "autos" && autos ? [autos.id] : null;
+  const who = scope === "personal" ? "tu vida" : scope === "autos" ? (autos?.name ?? "JH Autos") : "todo (vida + negocios)";
   const cost = monthlyCost(
     { businesses: d.businesses, recurring: d.recurring, debts: d.debts, cards: d.cards, budgets: d.budgets, catById: d.catById, accById: d.accById, toCOP: d.toCOP },
     ids
@@ -50,12 +52,12 @@ export default function MyMonth() {
     <main className="page">
       <BackBar title="Costos fijos" fallback="/" />
       <p className="muted small" style={{ margin: "-6px 2px 14px" }}>
-        Lo que cuesta {scope === "personal" ? "tu vida" : "todo (vida + negocios)"} cada mes: pagos fijos, cuotas de deudas y tarjetas, y tus presupuestos.
+        Lo que cuesta {who} cada mes: pagos fijos, cuotas de deudas y tarjetas, y tus presupuestos.
       </p>
-      <Seg value={scope} onChange={setScope} options={[{ value: "personal", label: "Mi vida (Personal)" }, { value: "all", label: "Todo" }]} />
+      <Seg value={scope} onChange={setScope} options={[{ value: "personal", label: "Personal" }, { value: "autos", label: autos?.name ?? "JH Autos" }, { value: "all", label: "Todo" }]} />
 
       <section className="hero" style={{ marginTop: 14 }}>
-        <div className="label">{scope === "personal" ? "Costos fijos personales" : "Costos fijos de todo"}</div>
+        <div className="label">{scope === "personal" ? "Costos fijos personales" : scope === "autos" ? `Costos fijos de ${autos?.name ?? "JH Autos"}` : "Costos fijos de todo"}</div>
         <div className="big num">{money(cost.total)}</div>
         <div className="sub">≈ {money(Math.round(cost.total / 30))} por día</div>
         <div className="pills">
