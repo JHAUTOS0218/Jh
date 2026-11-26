@@ -40,9 +40,7 @@ begin
              case when a.type = 'pocket' then 0 when a.type = 'card' then 2 else 1 end, a.sort, a.created_at)
       into out
       from accounts a
-     where a.user_id = uid and not a.archived and a.parent_id is null
-       and not (a.type = 'bank' and a.bank is not null and exists (
-             select 1 from accounts p where p.user_id = uid and not p.archived and p.type = 'pocket' and p.bank = a.bank));
+     where a.user_id = uid and not a.archived and a.parent_id is null;
   end if;
   return coalesce(out, array[]::text[]);
 end $$;
