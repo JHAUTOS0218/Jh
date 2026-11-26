@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useData, useTxs } from "@/lib/store";
 import { addMonths, currentYM, money, monthLabel, monthRange, monthShort, ymKey } from "@/lib/format";
@@ -16,7 +16,7 @@ import { mineAtCost, saleOf } from "@/components/Assets";
 import { TxList } from "@/components/TxList";
 import { MonthBars } from "@/components/Charts";
 import { AccountIcon } from "@/components/AccountIcon";
-import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus, IInbox } from "@/components/Icons";
+import { IAlert, IArrowDown, IArrowUp, IChevR, IWallet, IPlus, IInbox, IClose } from "@/components/Icons";
 
 export default function Home() {
   const { active, activeId, setActiveId, businesses, accounts, balances, toCOP, settings, catById, openTx, debts, recurring, recurringPaid, moneyAccounts, cards, assets, pendingCount, budgets, accById } = useData();
@@ -65,11 +65,35 @@ export default function Home() {
   );
   const firstName = (settings.display_name || "").trim().split(/\s+/)[0];
 
+  // avisos que ocultaste (se guardan en este iPhone y vuelven el mes siguiente)
+  const monthTag = ymKey(currentYM());
+  const [hidden, setHidden] = useState<string[]>([]);
+  useEffect(() => {
+    try { setHidden(JSON.parse(localStorage.getItem("jh-hidden-alerts") || "[]")); } catch { /* sin almacenamiento */ }
+  }, []);
+  const isHidden = (k: string) => hidden.includes(`${monthTag}|${k}`);
+  const hide = (k: string) => (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const next = [...hidden.filter((x) => x.startsWith(monthTag + "|")), `${monthTag}|${k}`];
+    setHidden(next);
+    try { localStorage.setItem("jh-hidden-alerts", JSON.stringify(next)); } catch { /* sin almacenamiento */ }
+  };
+  const Close = ({ k }: { k: string }) => (
+    <span role="button" aria-label="Ocultar aviso" onClick={hide(k)} style={{ flex: "none", marginLeft: 4, padding: 4, opacity: 0.7, display: "flex" }}><IClose size={16} /></span>
+  );
+  // un pago fijo creado este mes después de su día no cuenta como vencido (empieza el mes que viene)
+  const startsLater = (r: { day_of_month: number; created_at?: string }) => {
+    if (!r.created_at) return false;
+    const c = new Date(r.created_at);
+    const t = new Date();
+    return c.getFullYear() === t.getFullYear() && c.getMonth() === t.getMonth() && r.day_of_month < c.getDate();
+  };
+
   const recPending = recurring
-    .filter((r) => !recurringPaid[r.id] && (!activeId || r.business_id === activeId))
+    .filter((r) => !recurringPaid[r.id] && !startsLater(r) && (!activeId || r.business_id === activeId))
     .map((r) => ({ r, st: recurringStatus(r) }))
     .sort((a, b) => a.st.days - b.st.days);
-  const recUrgent = recPending.filter((x) => x.st.days <= 3);
+  const recUrgent = recPending.filter((x) => x.st.days <= 3 && !isHidden("rec|" + x.r.id));
 
   const budgetAlerts = budgets
     .filter((b) => !activeId || b.business_id === activeId)
@@ -151,20 +175,21 @@ export default function Home() {
 
       {myAssets.length > 0 && (
         <Link href="/activos" className="kpi" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-          <span><span className="k">Activos ({myAssets.length})</span><span className="v num" style={{ display: "block" }}>{money(assetsSale)}</span></span>
-          <span className="xsmall muted" style={{ textAlign: "right" }}>posible venta<br />costo {money(myAssets.reduce((s, x) => s + x.cost, 0))}</span>
+          <span><span className="k">Activos ({myAssets.length}) · posible venta</span><span className="v num" style={{ display: "block" }}>{money(assetsSale)}</span></span>
+          <span style={{ textAlign: "right" }}><span className="k">Costo</span><span className="num" style={{ display: "block", fontWeight: 700, fontSize: 15, marginTop: 4 }}>{money(myAssets.reduce((s, x) => s + x.cost, 0))}</span></span>
         </Link>
       )}
 
       {dueGroups.length > 0 && (
         <div style={{ marginTop: 12 }}>
-          {dueGroups.map((g) => (
+          {dueGroups.filter((g) => !isHidden("debt|" + g.key)).map((g) => (
             <Link key={g.key} href={`/deudas?id=${g.first.id}`} className={"alert" + (g.first.direction === "owe" ? " danger" : "")} style={{ display: "flex" }}>
               <IAlert size={18} />
               <span>
                 <b>{g.first.direction === "owe" ? `Pago a ${g.first.person}` : `Cobro a ${g.first.person}`}</b>: {nextDueText(g.first)}
                 {g.installment > 0 ? <> · {money(g.installment)}</> : null}
               </span>
+              <Close k={"debt|" + g.key} />
             </Link>
           ))}
         </div>
@@ -172,13 +197,14 @@ export default function Home() {
 
       {cardAlerts.length > 0 && (
         <div style={{ marginTop: 12 }}>
-          {cardAlerts.map((c) => (
+          {cardAlerts.filter((c) => !isHidden("card|" + c.card.id)).map((c) => (
             <Link key={c.card.id} href="/deudas" className={"alert" + (c.available < 0 ? " danger" : "")} style={{ display: "flex" }}>
               <IAlert size={18} />
               <span>
                 <b>{c.card.name}</b>:{" "}
                 {c.card.pay_day && c.totalDebt > 0 && daysUntilDue(c.card.pay_day) <= 5 ? <>{cardDueText(c.card.pay_day)} · debes {money(c.totalDebt)}</> : <>te quedan {money(c.available)} disponibles</>}
               </span>
+              <Close k={"card|" + c.card.id} />
             </Link>
           ))}
         </div>
@@ -191,6 +217,7 @@ export default function Home() {
               <IAlert size={18} />
               <span style={{ flex: 1 }}><b>{r.name}</b>: {st.label.toLowerCase()} · {money(r.amount)}</span>
               <b style={{ flex: "none" }}>{r.kind === "income" ? "Recibí" : "Pagar"}</b>
+              <Close k={"rec|" + r.id} />
             </button>
           ))}
         </div>
@@ -220,10 +247,11 @@ export default function Home() {
 
       {budgetAlerts.length > 0 && (
         <div style={{ marginTop: 12 }}>
-          {budgetAlerts.map(({ b, spent }) => (
+          {budgetAlerts.filter(({ b }) => !isHidden("bud|" + b.id)).map(({ b, spent }) => (
             <Link key={b.id} href="/mas/presupuestos" className={"alert" + (spent >= b.amount ? " danger" : "")} style={{ display: "flex" }}>
               <IAlert size={18} />
               <span><b>{b.name || catById(b.category_id)?.name || "Presupuesto"}</b>: {spent >= b.amount ? "te pasaste" : `vas en el ${Math.round((spent / b.amount) * 100)}%`} · {money(spent)} de {money(b.amount)}</span>
+              <Close k={"bud|" + b.id} />
             </Link>
           ))}
         </div>

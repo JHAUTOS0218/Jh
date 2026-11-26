@@ -96,6 +96,7 @@ export interface Recurring {
   note: string | null;
   active: boolean;
   sort: number;
+  created_at?: string;
 }
 
 export type DebtDirection = "owe" | "owed"; // owe = yo debo · owed = me deben
